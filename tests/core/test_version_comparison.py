@@ -155,5 +155,7 @@ def test_already_covered_addition_flag():
         sha256="sha2",
     )
     diff = compare(old, new)
-    added_sub = next(i for i in diff.host.added if i.name == "https://sub.example.com/*")
+    added_sub = next(
+        i for i in diff.host.added if i.name == "https://sub.example.com/*"
+    )
     assert added_sub.already_covered_by == "*://*.example.com/*"

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+  <symbol id="icon-search" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="8.5" cy="8.5" r="5.5"/>
+    <line x1="12.5" y1="12.5" x2="17" y2="17"/>
+  </symbol>
+  <symbol id="icon-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="6 8 10 12 14 8"/>
+  </symbol>
+  <symbol id="icon-close" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="5" y1="5" x2="15" y2="15"/>
+    <line x1="15" y1="5" x2="5" y2="15"/>
+  </symbol>
+  <symbol id="icon-menu" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="6" x2="16" y2="6"/>
+    <line x1="4" y1="10" x2="16" y2="10"/>
+    <line x1="4" y1="14" x2="16" y2="14"/>
+  </symbol>
+  <symbol id="icon-check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="4 10 8 14 16 6"/>
+  </symbol>
+</svg>

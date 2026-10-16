@@ -31,7 +31,9 @@ class PermissionKnowledgeBase:
     def reload(self) -> None:
         """Load and validate knowledge base and scoring configuration."""
         if not self.knowledge_path.exists():
-            raise FileNotFoundError(f"Knowledge base not found at {self.knowledge_path}")
+            raise FileNotFoundError(
+                f"Knowledge base not found at {self.knowledge_path}"
+            )
         if not self.config_path.exists():
             raise FileNotFoundError(f"Scoring config not found at {self.config_path}")
 
@@ -43,7 +45,9 @@ class PermissionKnowledgeBase:
 
         # Validate knowledge base essentials
         if "api_permissions" not in raw_kb or "host_tiers" not in raw_kb:
-            raise ValueError("Malformed permission knowledge base: missing required sections")
+            raise ValueError(
+                "Malformed permission knowledge base: missing required sections"
+            )
 
         self.knowledge_version: str = str(raw_kb.get("knowledge_version", "unknown"))
         self.schema_version: int = int(raw_kb.get("schema_version", 1))
@@ -52,7 +56,9 @@ class PermissionKnowledgeBase:
 
         # Validate scoring config essentials
         self.formula_version: str = str(raw_cfg.get("formula_version", "1"))
-        self.thresholds: dict[str, int] = raw_cfg.get("thresholds", {"low_max": 34, "mid_max": 69})
+        self.thresholds: dict[str, int] = raw_cfg.get(
+            "thresholds", {"low_max": 34, "mid_max": 69}
+        )
         self.default_unknown_weight: int = int(raw_cfg.get("default_unknown_weight", 3))
         self.weight_labels: dict[str, str] = raw_cfg.get(
             "weight_labels",
@@ -69,8 +75,12 @@ class PermissionKnowledgeBase:
                 "single_host": 1,
             },
         )
-        self.floors: dict[str, int] = raw_cfg.get("floors", {"critical_floor": 70, "high_floor": 40})
-        self.creep_config: dict[str, int] = raw_cfg.get("creep", {"delta_review": 5, "delta_significant": 15})
+        self.floors: dict[str, int] = raw_cfg.get(
+            "floors", {"critical_floor": 70, "high_floor": 40}
+        )
+        self.creep_config: dict[str, int] = raw_cfg.get(
+            "creep", {"delta_review": 5, "delta_significant": 15}
+        )
         self.limits: dict[str, int] = raw_cfg.get("limits", {})
 
     def label_for_weight(self, weight: int) -> str:
@@ -133,8 +143,13 @@ class PermissionKnowledgeBase:
 
         # Use specific describe() summary if pattern is narrower than broad tier
         allows = describe(parsed)
-        legitimate_use = tier_data.get("legitimate_use", "Website integration or content modification.")
-        source_url = tier_data.get("source", "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns")
+        legitimate_use = tier_data.get(
+            "legitimate_use", "Website integration or content modification."
+        )
+        source_url = tier_data.get(
+            "source",
+            "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+        )
 
         return PermissionInfo(
             name=pattern,

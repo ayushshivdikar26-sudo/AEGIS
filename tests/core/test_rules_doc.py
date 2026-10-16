@@ -16,6 +16,6 @@ def test_rules_doc_not_stale():
         committed_content = f.read()
 
     fresh_content = generate_rules_markdown()
-    assert (
-        committed_content == fresh_content
-    ), "docs/RULES.md is stale. Run 'python scripts/gen_rules_doc.py' to update it."
+    assert committed_content == fresh_content, (
+        "docs/RULES.md is stale. Run 'python scripts/gen_rules_doc.py' to update it."
+    )

@@ -42,7 +42,12 @@ def test_valid_manifest_v2_mixed_permissions():
         "manifest_version": 2,
         "name": "Legacy V2 Extension",
         "version": "2.0",
-        "permissions": ["storage", "https://api.github.com/*", "tabs", "*://*.example.org/*"],
+        "permissions": [
+            "storage",
+            "https://api.github.com/*",
+            "tabs",
+            "*://*.example.org/*",
+        ],
         "content_scripts": [
             {
                 "matches": ["https://*.content.org/*"],
@@ -123,14 +128,18 @@ def test_utf8_bom_handling():
 
 
 def test_duplicate_key_rejection():
-    raw_json = '{"manifest_version": 3, "name": "Dup", "name": "Dup2", "version": "1.0"}'
+    raw_json = (
+        '{"manifest_version": 3, "name": "Dup", "name": "Dup2", "version": "1.0"}'
+    )
     with pytest.raises(ManifestError) as exc:
         parse_manifest(raw_json)
     assert exc.value.code == "duplicate_key"
 
 
 def test_nan_infinity_rejection():
-    raw_json = '{"manifest_version": 3, "name": "NaN Test", "version": "1.0", "val": NaN}'
+    raw_json = (
+        '{"manifest_version": 3, "name": "NaN Test", "version": "1.0", "val": NaN}'
+    )
     with pytest.raises(ManifestError) as exc:
         parse_manifest(raw_json)
     assert exc.value.code == "not_json"
@@ -203,20 +212,43 @@ def test_invalid_field_types():
     assert exc.value.code == "invalid_field_type"
 
     with pytest.raises(ManifestError) as exc:
-        parse_manifest({"manifest_version": 3, "name": "Test", "version": "1.0", "description": 123})
+        parse_manifest(
+            {
+                "manifest_version": 3,
+                "name": "Test",
+                "version": "1.0",
+                "description": 123,
+            }
+        )
     assert exc.value.code == "invalid_field_type"
 
     with pytest.raises(ManifestError) as exc:
-        parse_manifest({"manifest_version": 3, "name": "Test", "version": "1.0", "permissions": "not_list"})
+        parse_manifest(
+            {
+                "manifest_version": 3,
+                "name": "Test",
+                "version": "1.0",
+                "permissions": "not_list",
+            }
+        )
     assert exc.value.code == "invalid_field_type"
 
     with pytest.raises(ManifestError) as exc:
-        parse_manifest({"manifest_version": 3, "name": "Test", "version": "1.0", "permissions": [123]})
+        parse_manifest(
+            {
+                "manifest_version": 3,
+                "name": "Test",
+                "version": "1.0",
+                "permissions": [123],
+            }
+        )
     assert exc.value.code == "invalid_field_type"
 
 
 def test_version_key_variations():
-    m1 = parse_manifest({"manifest_version": 3, "name": "VKey1", "version": "1.2.3.4.5"})
+    m1 = parse_manifest(
+        {"manifest_version": 3, "name": "VKey1", "version": "1.2.3.4.5"}
+    )
     assert m1.version_key is None
 
     m2 = parse_manifest({"manifest_version": 3, "name": "VKey2", "version": "1.beta"})
@@ -244,4 +276,3 @@ def test_dict_input_handling():
     raw = {"manifest_version": 3, "name": "Dict Input", "version": "1.0"}
     parsed = parse_manifest(raw)
     assert parsed.name == "Dict Input"
-

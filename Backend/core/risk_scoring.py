@@ -48,15 +48,21 @@ def assess_manifest(
         kb = get_knowledge_base()
 
     # 1. Resolve requested API and Host permissions
-    api_items: list[PermissionInfo] = [kb.info_for_api(name, kind="api") for name in parsed.api_permissions]
-    host_items: list[PermissionInfo] = [kb.info_for_host(pat, kind="host") for pat in parsed.host_permissions]
+    api_items: list[PermissionInfo] = [
+        kb.info_for_api(name, kind="api") for name in parsed.api_permissions
+    ]
+    host_items: list[PermissionInfo] = [
+        kb.info_for_host(pat, kind="host") for pat in parsed.host_permissions
+    ]
 
     # Resolve optional permissions for potential score evaluation
     opt_api_items: list[PermissionInfo] = [
-        kb.info_for_api(name, kind="optional_api") for name in parsed.optional_api_permissions
+        kb.info_for_api(name, kind="optional_api")
+        for name in parsed.optional_api_permissions
     ]
     opt_host_items: list[PermissionInfo] = [
-        kb.info_for_host(pat, kind="optional_host") for pat in parsed.optional_host_permissions
+        kb.info_for_host(pat, kind="optional_host")
+        for pat in parsed.optional_host_permissions
     ]
 
     all_requested = api_items + host_items
@@ -161,7 +167,9 @@ def assess_manifest(
     high_floor = kb.floors.get("high_floor", 40)
 
     critical_flags: list[str] = [
-        f"Critical permission requested: {item.name}" for item in all_requested if item.weight == 5
+        f"Critical permission requested: {item.name}"
+        for item in all_requested
+        if item.weight == 5
     ]
 
     floor_applied = 0
@@ -271,7 +279,9 @@ def assess_manifest(
     elif comb_max_w == 4:
         comb_floor = high_floor
 
-    potential_score = min(100, max(0, _round_half_up(max(s_comb_base, float(comb_floor)))))
+    potential_score = min(
+        100, max(0, _round_half_up(max(s_comb_base, float(comb_floor))))
+    )
 
     # 8. Determine Risk Level
     low_max = kb.thresholds.get("low_max", 34)
@@ -293,17 +303,25 @@ def assess_manifest(
         # Build plain language summary without AI
         summary_parts = []
         # Check high impact host access
-        has_all_sites = any(item.tier and item.tier.value == "all_sites" for item in host_items)
+        has_all_sites = any(
+            item.tier and item.tier.value == "all_sites" for item in host_items
+        )
         if has_all_sites:
-            summary_parts.append("Can read and change data on all websites you visit (high exposure).")
+            summary_parts.append(
+                "Can read and change data on all websites you visit (high exposure)."
+            )
         elif len(host_items) > 0:
-            summary_parts.append(f"Can access data on {len(host_items)} specific website match pattern(s).")
+            summary_parts.append(
+                f"Can access data on {len(host_items)} specific website match pattern(s)."
+            )
 
         # Check critical APIs
         high_weight_apis = [item.name for item in api_items if item.weight >= 4]
         if high_weight_apis:
             names_str = ", ".join(high_weight_apis[:3])
-            summary_parts.append(f"Requests high-exposure browser capabilities ({names_str}).")
+            summary_parts.append(
+                f"Requests high-exposure browser capabilities ({names_str})."
+            )
 
         if not summary_parts:
             summary_parts.append(
