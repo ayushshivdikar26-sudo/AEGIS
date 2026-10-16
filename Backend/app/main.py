@@ -101,7 +101,7 @@ def create_app() -> FastAPI:
 
         from Backend.app.repo import seed_mock_store_from_fixtures
 
-        if "pytest" not in sys.modules:
+        if "pytest" not in sys.modules and settings.ENVIRONMENT != "production":
             seed_mock_store_from_fixtures()
 
     return app

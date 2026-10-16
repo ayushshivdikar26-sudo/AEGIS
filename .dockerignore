@@ -1,0 +1,22 @@
+# Docker deployment ignore rules
+.git/
+.gitignore
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+dev/
+PRD/
+docs/
+*.md
+!README.md
+Frontend/assets/installed_icons/*
+!Frontend/assets/installed_icons/.gitkeep
