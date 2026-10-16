@@ -1,0 +1,456 @@
+{
+  "schema_version": 1,
+  "knowledge_version": "2026.10.1",
+  "api_permissions": {
+    "debugger": {
+      "weight": 5,
+      "allows": "Attach the browser debugger to tabs, intercept network traffic, and manipulate code execution.",
+      "legitimate_use": "Developer tools, automated testing, or in-browser code debugging extensions.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/debugger",
+      "reviewed": true
+    },
+    "nativeMessaging": {
+      "weight": 5,
+      "allows": "Exchange messages with native applications installed on your computer outside the browser.",
+      "legitimate_use": "Hardware integration, password manager desktop app sync, or security key drivers.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging",
+      "reviewed": true
+    },
+    "proxy": {
+      "weight": 5,
+      "allows": "Configure browser proxy settings and redirect web traffic through custom intermediary servers.",
+      "legitimate_use": "VPN services, privacy networks, or corporate proxy management utilities.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/proxy",
+      "reviewed": true
+    },
+    "management": {
+      "weight": 5,
+      "allows": "Install, uninstall, enable, disable, and inspect other browser extensions and web apps.",
+      "legitimate_use": "Extension managers, enterprise administration suites, or developer toolkits.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/management",
+      "reviewed": true
+    },
+    "webRequestBlocking": {
+      "weight": 5,
+      "allows": "Block, modify, or inject data into web requests in real time before they complete.",
+      "legitimate_use": "Ad blockers, tracker blockers, or advanced web security filters.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/webRequest",
+      "reviewed": true
+    },
+    "history": {
+      "weight": 4,
+      "allows": "Read and delete your browsing history and visited web page records.",
+      "legitimate_use": "History search tools, productivity dashboards, or privacy history clean-up utilities.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/history",
+      "reviewed": true
+    },
+    "cookies": {
+      "weight": 4,
+      "allows": "Read, change, and delete website cookies, including login session identifiers.",
+      "legitimate_use": "Session switchers, developer cookie inspectors, or privacy tracking controllers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/cookies",
+      "reviewed": true
+    },
+    "tabs": {
+      "weight": 4,
+      "allows": "Access sensitive tab details such as URLs, titles, and favicon URLs across all open tabs.",
+      "legitimate_use": "Tab managers, bookmarking tools, or window organization assistants.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/tabs",
+      "reviewed": true
+    },
+    "webRequest": {
+      "weight": 4,
+      "allows": "Observe and inspect live web traffic and HTTP headers across all websites you browse.",
+      "legitimate_use": "Traffic monitoring, developer network inspection, or web security audit tools.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/webRequest",
+      "reviewed": true
+    },
+    "clipboardRead": {
+      "weight": 4,
+      "allows": "Read all text and image data currently stored on your computer clipboard.",
+      "legitimate_use": "Clipboard managers, translation shortcuts, or note-taking assistants.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/clipboardRead",
+      "reviewed": true
+    },
+    "pageCapture": {
+      "weight": 4,
+      "allows": "Save any open web page as a complete MHTML archive file.",
+      "legitimate_use": "Offline reading apps, research archive savers, or snapshot tools.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/pageCapture",
+      "reviewed": true
+    },
+    "tabCapture": {
+      "weight": 4,
+      "allows": "Capture video and audio streams directly from active browser tabs.",
+      "legitimate_use": "Screen recorders, presentation streaming tools, or audio transcribers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/tabCapture",
+      "reviewed": true
+    },
+    "desktopCapture": {
+      "weight": 4,
+      "allows": "Capture content from your entire desktop screen, windows, or applications.",
+      "legitimate_use": "Video conferencing screen sharing, full-desktop recorders, or broadcast streaming tools.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/desktopCapture",
+      "reviewed": true
+    },
+    "privacy": {
+      "weight": 4,
+      "allows": "Control browser privacy settings such as autofill, third-party cookies, and webRTC IP leaks.",
+      "legitimate_use": "Privacy hardening suites and security compliance assistants.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/privacy",
+      "reviewed": true
+    },
+    "declarativeNetRequestWithHostAccess": {
+      "weight": 4,
+      "allows": "Block or redirect network requests on specific websites based on rules matching host access.",
+      "legitimate_use": "Targeted site filtering, developer mock servers, or site-specific blockers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest",
+      "reviewed": true
+    },
+    "identity.email": {
+      "weight": 4,
+      "allows": "Read the primary email address of your signed-in browser profile.",
+      "legitimate_use": "Seamless sign-in and user identity synchronization for account-backed extensions.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/identity",
+      "reviewed": true
+    },
+    "webAuthenticationProxy": {
+      "weight": 4,
+      "allows": "Intercept and proxy WebAuthn hardware token authentication requests.",
+      "legitimate_use": "Enterprise identity bridges or passkey credential synchronization managers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/webAuthenticationProxy",
+      "reviewed": true
+    },
+    "bookmarks": {
+      "weight": 3,
+      "allows": "Read, create, edit, and organize all browser bookmarks and bookmark folders.",
+      "legitimate_use": "Bookmark managers, reading lists, or cross-browser bookmark sync tools.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/bookmarks",
+      "reviewed": true
+    },
+    "downloads": {
+      "weight": 3,
+      "allows": "Initiate, monitor, pause, resume, and cancel browser file downloads.",
+      "legitimate_use": "Download managers, image batch downloaders, or file routing utilities.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/downloads",
+      "reviewed": true
+    },
+    "downloads.open": {
+      "weight": 3,
+      "allows": "Open downloaded files directly on your computer through their default system applications.",
+      "legitimate_use": "Automated workflow tools or instant document viewer integrations.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/downloads#method-open",
+      "reviewed": true
+    },
+    "geolocation": {
+      "weight": 3,
+      "allows": "Query your physical geographic location coordinates via browser sensors.",
+      "legitimate_use": "Local weather displays, store locator assistants, or region-specific tools.",
+      "source": "https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions#geolocation",
+      "reviewed": true
+    },
+    "contentSettings": {
+      "weight": 3,
+      "allows": "Control website permissions for cookies, JavaScript, camera, microphone, and popups.",
+      "legitimate_use": "Site permission toggles, script blockers, or privacy permission profiles.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/contentSettings",
+      "reviewed": true
+    },
+    "topSites": {
+      "weight": 3,
+      "allows": "Read your most frequently visited website shortcuts from the browser new-tab page.",
+      "legitimate_use": "Custom new tab replacements or speed-dial dashboard organizers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/topSites",
+      "reviewed": true
+    },
+    "sessions": {
+      "weight": 3,
+      "allows": "Query and restore recently closed browser tabs and windows.",
+      "legitimate_use": "Session restore assistants, tab recovery managers, or window snapshot utilities.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/sessions",
+      "reviewed": true
+    },
+    "scripting": {
+      "weight": 3,
+      "allows": "Execute JavaScript and inject CSS into web pages where the extension has host access.",
+      "legitimate_use": "Web page annotators, user style engines, or form autofill assistants.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/scripting",
+      "reviewed": true
+    },
+    "webNavigation": {
+      "weight": 3,
+      "allows": "Observe detailed navigation events, redirects, and frame loading states in real time.",
+      "legitimate_use": "Page load timers, analytics monitors, or automatic navigation helpers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/webNavigation",
+      "reviewed": true
+    },
+    "identity": {
+      "weight": 3,
+      "allows": "Obtain OAuth2 authentication tokens using browser-mediated sign-in flows.",
+      "legitimate_use": "Third-party service authorization for calendar, cloud storage, or social media.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/identity",
+      "reviewed": true
+    },
+    "browsingData": {
+      "weight": 3,
+      "allows": "Clear browser cache, cookies, download history, and autofill forms.",
+      "legitimate_use": "Privacy cleanup tools, cache clearers, or automated browsing data purgers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/browsingData",
+      "reviewed": true
+    },
+    "declarativeNetRequestFeedback": {
+      "weight": 3,
+      "allows": "Read internal diagnostic information about blocked or modified network requests.",
+      "legitimate_use": "Rule testing, ad blocker debugging, or network filter diagnostic suites.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#method-getMatchedRules",
+      "reviewed": true
+    },
+    "printing": {
+      "weight": 3,
+      "allows": "Send print jobs directly to printers installed on the local system.",
+      "legitimate_use": "Receipt printers, invoice generators, or automated document printing workflows.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/printing",
+      "reviewed": true
+    },
+    "printerProvider": {
+      "weight": 3,
+      "allows": "Expose virtual print destinations to the browser print dialog.",
+      "legitimate_use": "Cloud print integrations, PDF transform providers, or fax gateways.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/printerProvider",
+      "reviewed": true
+    },
+    "notifications": {
+      "weight": 2,
+      "allows": "Display desktop notifications through the operating system notification center.",
+      "legitimate_use": "Alerting users to incoming messages, calendar reminders, or background task completion.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/notifications",
+      "reviewed": true
+    },
+    "offscreen": {
+      "weight": 2,
+      "allows": "Create hidden DOM documents in the background to access audio playback, clipboard, or DOM APIs.",
+      "legitimate_use": "Background audio playback, clipboard parsing, or canvas rendering in Manifest V3.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/offscreen",
+      "reviewed": true
+    },
+    "declarativeNetRequest": {
+      "weight": 2,
+      "allows": "Block or modify network requests declaratively using pre-compiled rules without seeing request content.",
+      "legitimate_use": "Ad blocking and content filtering without access to sensitive request bodies.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest",
+      "reviewed": true
+    },
+    "declarativeContent": {
+      "weight": 2,
+      "allows": "Take page actions automatically when web pages match specific conditions without running background scripts.",
+      "legitimate_use": "Enabling extension popup buttons only when visiting supported websites.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/declarativeContent",
+      "reviewed": true
+    },
+    "search": {
+      "weight": 2,
+      "allows": "Query the browser default search engine and display results.",
+      "legitimate_use": "Omnibox search shortcuts, quick lookups, or smart search enhancements.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/search",
+      "reviewed": true
+    },
+    "gcm": {
+      "weight": 2,
+      "allows": "Send and receive push messages through Google Cloud Messaging.",
+      "legitimate_use": "Receiving real-time updates and notifications from cloud web services.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/gcm",
+      "reviewed": true
+    },
+    "favicon": {
+      "weight": 2,
+      "allows": "Request and display website favicon icons for bookmarked or open pages.",
+      "legitimate_use": "Visual tab switchers, bookmark managers, or speed-dial menus.",
+      "source": "https://developer.chrome.com/docs/extensions/how-to/ui/favicons",
+      "reviewed": true
+    },
+    "system.cpu": {
+      "weight": 2,
+      "allows": "Query system CPU processor architecture, model name, and core usage metadata.",
+      "legitimate_use": "System resource monitors or hardware diagnostic extensions.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/system/cpu",
+      "reviewed": true
+    },
+    "system.memory": {
+      "weight": 2,
+      "allows": "Query system physical memory capacity and available RAM.",
+      "legitimate_use": "Performance monitoring dashboards or memory saver extensions.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/system/memory",
+      "reviewed": true
+    },
+    "system.storage": {
+      "weight": 2,
+      "allows": "Query attached storage devices, capacities, and monitor device attachment events.",
+      "legitimate_use": "External disk file routers or system diagnostic monitors.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/system/storage",
+      "reviewed": true
+    },
+    "system.display": {
+      "weight": 2,
+      "allows": "Query connected monitor resolutions, work areas, and display arrangements.",
+      "legitimate_use": "Multi-monitor window organizers or layout placement assistants.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/system/display",
+      "reviewed": true
+    },
+    "ttsEngine": {
+      "weight": 2,
+      "allows": "Implement a custom text-to-speech voice synthesizer engine for the browser.",
+      "legitimate_use": "Custom synthetic voice packages or accessibility speech tools.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/ttsEngine",
+      "reviewed": true
+    },
+    "background": {
+      "weight": 2,
+      "allows": "Start browser processes early at system boot and keep running after windows close.",
+      "legitimate_use": "Background message syncing, notification listeners, or instant startup.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/background",
+      "reviewed": true
+    },
+    "loginState": {
+      "weight": 2,
+      "allows": "Read the login status of the managed ChromeOS profile.",
+      "legitimate_use": "Kiosk and enterprise device state verification on ChromeOS.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/loginState",
+      "reviewed": true
+    },
+    "readingList": {
+      "weight": 2,
+      "allows": "Read, add, update, and remove items in the browser reading list.",
+      "legitimate_use": "Read-it-later utilities or article collection organizers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/readingList",
+      "reviewed": true
+    },
+    "tabGroups": {
+      "weight": 2,
+      "allows": "Create, modify, label, color, and organize tab groups in the browser window.",
+      "legitimate_use": "Tab grouping assistants, workflow categorizers, or project tab organizers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/tabGroups",
+      "reviewed": true
+    },
+    "clipboardWrite": {
+      "weight": 2,
+      "allows": "Write text and image data to your computer clipboard.",
+      "legitimate_use": "Copying links, formatted snippets, or generated passwords with one click.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/clipboardWrite",
+      "reviewed": true
+    },
+    "storage": {
+      "weight": 1,
+      "allows": "Store extension settings and cached data locally in the browser profile.",
+      "legitimate_use": "Persisting user preferences, local cache, or extension state across restarts.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/storage",
+      "reviewed": true
+    },
+    "unlimitedStorage": {
+      "weight": 1,
+      "allows": "Exceed standard 5 MB storage quota for extension databases and local storage.",
+      "legitimate_use": "Offline data stores, large local caches, or document drafts.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/unlimitedStorage",
+      "reviewed": true
+    },
+    "alarms": {
+      "weight": 1,
+      "allows": "Schedule code to run periodically or at specific future times in the background.",
+      "legitimate_use": "Periodic feed polling, reminder triggers, or cache cleanup tasks.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/alarms",
+      "reviewed": true
+    },
+    "activeTab": {
+      "weight": 1,
+      "allows": "Temporarily access the current active web page only when the user explicitly clicks the extension icon.",
+      "legitimate_use": "User-triggered page actions, full-page screenshots, or one-click clip tools.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/activeTab",
+      "reviewed": true
+    },
+    "contextMenus": {
+      "weight": 1,
+      "allows": "Add custom action items to the browser right-click context menu.",
+      "legitimate_use": "Quick actions for selected text, images, or links via the right-click menu.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/contextMenus",
+      "reviewed": true
+    },
+    "idle": {
+      "weight": 1,
+      "allows": "Detect when the user is idle, locked, or active on the machine.",
+      "legitimate_use": "Scheduling resource-heavy maintenance tasks when the user is away.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/idle",
+      "reviewed": true
+    },
+    "sidePanel": {
+      "weight": 1,
+      "allows": "Render custom user interface in the browser side panel companion window.",
+      "legitimate_use": "Notes, companion dashboards, translators, or document assistants.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/sidePanel",
+      "reviewed": true
+    },
+    "fontSettings": {
+      "weight": 1,
+      "allows": "Inspect and customize default browser font sizes and font families.",
+      "legitimate_use": "Typography customizers or accessibility font enhancers.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/fontSettings",
+      "reviewed": true
+    },
+    "power": {
+      "weight": 1,
+      "allows": "Prevent the computer screen or system from sleeping while a task runs.",
+      "legitimate_use": "Presentation view, long video playback, or active kiosk displays.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/power",
+      "reviewed": true
+    },
+    "tts": {
+      "weight": 1,
+      "allows": "Speak text using the browser built-in speech synthesis synthesizer.",
+      "legitimate_use": "Screen reading, audio alerts, or pronunciation guides.",
+      "source": "https://developer.chrome.com/docs/extensions/reference/api/tts",
+      "reviewed": true
+    }
+  },
+  "host_tiers": {
+    "all_sites": {
+      "weight": 5,
+      "allows": "Read and change all data on every website you visit.",
+      "legitimate_use": "Ad blockers, comprehensive password managers, or web-wide dark mode enhancers.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+      "reviewed": true
+    },
+    "file_access": {
+      "weight": 4,
+      "allows": "Access and read local files stored directly on your computer filesystem.",
+      "legitimate_use": "Local file viewers, Markdown previewers, or local developer utilities.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+      "reviewed": true
+    },
+    "suffix_wide": {
+      "weight": 4,
+      "allows": "Access all websites under an entire top-level domain or public suffix (such as all .com or .co.uk sites).",
+      "legitimate_use": "Broad country-level utilities or multi-site integrations across an entire domain registry.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+      "reviewed": true
+    },
+    "all_hosts_partial_path": {
+      "weight": 4,
+      "allows": "Access specific web page paths across every website on the Internet.",
+      "legitimate_use": "Injecting scripts on standard paths across multiple web applications.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+      "reviewed": true
+    },
+    "domain_wide": {
+      "weight": 2,
+      "allows": "Access a specific domain and all of its subdomains.",
+      "legitimate_use": "Enhancing a single web platform that operates across multiple subdomains.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+      "reviewed": true
+    },
+    "single_host": {
+      "weight": 1,
+      "allows": "Access one specific website hostname only.",
+      "legitimate_use": "Site-specific enhancements, styling, or workflow integration for a single site.",
+      "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+      "reviewed": true
+    }
+  }
+}

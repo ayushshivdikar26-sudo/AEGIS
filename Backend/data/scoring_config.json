@@ -1,0 +1,37 @@
+{
+  "formula_version": "1",
+  "thresholds": {
+    "low_max": 34,
+    "mid_max": 69
+  },
+  "default_unknown_weight": 3,
+  "weight_labels": {
+    "1": "low",
+    "2": "low",
+    "3": "medium",
+    "4": "high",
+    "5": "critical"
+  },
+  "host_tier_weights": {
+    "all_sites": 5,
+    "file_access": 4,
+    "suffix_wide": 4,
+    "all_hosts_partial_path": 4,
+    "domain_wide": 2,
+    "single_host": 1
+  },
+  "floors": {
+    "critical_floor": 70,
+    "high_floor": 40
+  },
+  "creep": {
+    "delta_review": 5,
+    "delta_significant": 15
+  },
+  "limits": {
+    "max_manifest_bytes": 1048576,
+    "max_nesting_depth": 32,
+    "max_array_items": 500,
+    "max_string_length": 2048
+  }
+}
