@@ -1,0 +1,610 @@
+{
+  "extensions": [
+    {
+      "id": "sample-notes-sync",
+      "name": "Sample Notes Sync",
+      "browser": "Google Chrome",
+      "version": "2.4.0",
+      "icon_url": null,
+      "developer": "Sample Privacy Team",
+      "description": {
+        "text": "Synchronize personal notes and snippets across your devices.",
+        "origin": "manifest"
+      },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 70,
+        "risk_level": "high",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 40.0,
+        "host_score": 100.0,
+        "max_weight": 5,
+        "critical_flags": ["Critical permission requested: <all_urls>"],
+        "breakdown": [
+          { "label": "<all_urls>", "contribution": 50.0, "kind": "host" },
+          { "label": "history", "contribution": 13.3, "kind": "api" },
+          { "label": "storage", "contribution": 3.3, "kind": "api" },
+          { "label": "alarms", "contribution": 3.3, "kind": "api" },
+          { "label": "High-weight permission floor", "contribution": 10.0, "kind": "floor" }
+        ],
+        "potential_score": 70,
+        "plain_summary": "Can read and change data on all websites you visit (high exposure). Requests high-exposure browser capabilities (history).",
+        "notes": [],
+        "unrecognized": [],
+        "calculation": [
+          { "step": "R_api", "formula": "100 * sum(w_i) / (5 * n_api)", "values": "100 * 6 / 15", "result": "40.0" },
+          { "step": "R_host", "formula": "100 * sum(w_i) / (5 * n_host)", "values": "100 * 5 / 5", "result": "100.0" },
+          { "step": "S_base", "formula": "0.5 * R_api + 0.5 * R_host", "values": "0.5 * 40.0 + 0.5 * 100.0", "result": "70.0" },
+          { "step": "Floor", "formula": "Weight-5 permission present -> S >= 70", "values": "max_weight = 5", "result": "70" },
+          { "step": "Score", "formula": "round_half_up(max(S_base, Floor))", "values": "round_half_up(70.0)", "result": "70" }
+        ]
+      },
+      "permissions": {
+        "api": [
+          {
+            "name": "history",
+            "kind": "api",
+            "weight": 4,
+            "risk_label": "high",
+            "status": "needs_review",
+            "allows": "Read and delete your browsing history and visited web page records.",
+            "legitimate_use": "History search tools, productivity dashboards, or privacy history clean-up utilities.",
+            "source_url": "https://developer.chrome.com/docs/extensions/reference/api/history",
+            "reviewed": true,
+            "evidence": ["Declared in manifest without clear note-syncing justification"]
+          },
+          {
+            "name": "storage",
+            "kind": "api",
+            "weight": 1,
+            "risk_label": "low",
+            "status": "justified",
+            "allows": "Store extension settings and cached data locally in the browser profile.",
+            "legitimate_use": "Persisting user preferences, local cache, or extension state across restarts.",
+            "source_url": "https://developer.chrome.com/docs/extensions/reference/api/storage",
+            "reviewed": true,
+            "evidence": ["Needed to store local notes"]
+          },
+          {
+            "name": "alarms",
+            "kind": "api",
+            "weight": 1,
+            "risk_label": "low",
+            "status": "justified",
+            "allows": "Schedule code to run periodically or at specific future times in the background.",
+            "legitimate_use": "Periodic feed polling, reminder triggers, or cache cleanup tasks.",
+            "source_url": "https://developer.chrome.com/docs/extensions/reference/api/alarms",
+            "reviewed": true,
+            "evidence": ["Periodic sync polling"]
+          }
+        ],
+        "host": [
+          {
+            "name": "<all_urls>",
+            "kind": "host",
+            "weight": 5,
+            "risk_label": "critical",
+            "status": "potentially_excessive",
+            "allows": "Read and change all data on every website you visit.",
+            "legitimate_use": "Content blockers or comprehensive password managers.",
+            "source_url": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+            "reviewed": true,
+            "evidence": ["Unrestricted web access added in v2.4.0"]
+          }
+        ],
+        "optional": []
+      },
+      "versions": [
+        { "version": "2.4.0", "captured_at": "2026-10-15T12:00:00Z" },
+        { "version": "2.3.0", "captured_at": "2026-09-01T10:00:00Z" },
+        { "version": "2.0.0", "captured_at": "2026-06-15T08:00:00Z" }
+      ],
+      "creep": {
+        "available": true,
+        "reason": null,
+        "outcome": "Significant increase in assessed permission exposure",
+        "summary": "2 added, 1 removed, 2 retained, 1 host scope(s) broadened. Risk score moved from 20 to 70.",
+        "added": [
+          { "name": "history", "risk_label": "high", "weight": 4, "kind": "api", "source": "permissions" },
+          { "name": "<all_urls>", "risk_label": "critical", "weight": 5, "kind": "host", "source": "host_permissions" }
+        ],
+        "removed": [
+          { "name": "https://example.com/*", "risk_label": "low", "weight": 1, "kind": "host", "source": "host_permissions" }
+        ],
+        "broadened": [
+          {
+            "from_pattern": "https://example.com/*",
+            "to_pattern": "<all_urls>",
+            "from_tier": "single_host",
+            "to_tier": "all_sites",
+            "explanation": "Host access broadened from 'https://example.com/*' (single_host) to '<all_urls>' (all_sites)"
+          }
+        ],
+        "could_allow": [
+          "history: Read and delete your browsing history and visited web page records.",
+          "<all_urls>: Read and change all data on every website you visit."
+        ],
+        "alignment": {
+          "status": "unclear",
+          "text": "Purpose alignment has not been evaluated."
+        },
+        "score_from": 20,
+        "score_to": 70,
+        "limitations": [
+          "Manifest lists requested capabilities, not proof of use.",
+          "AEGIS does not inspect extension code.",
+          "Descriptions are claims, not proof of intent.",
+          "Optional permissions require explicit runtime user consent.",
+          "Risk scores are heuristics under formula version 1."
+        ]
+      }
+    },
+    {
+      "id": "sample-tab-manager",
+      "name": "Sample Tab Manager",
+      "browser": "Mozilla Firefox",
+      "version": "1.0.0",
+      "icon_url": null,
+      "developer": "Tab Tools Lab",
+      "description": {
+        "text": "Organize open tabs into clean productivity groups.",
+        "origin": "manifest"
+      },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 40,
+        "risk_level": "medium",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 40.0,
+        "host_score": 0.0,
+        "max_weight": 4,
+        "critical_flags": [],
+        "breakdown": [
+          { "label": "tabs", "contribution": 40.0, "kind": "api" }
+        ],
+        "potential_score": 40,
+        "plain_summary": "Requests high-exposure browser capabilities (tabs).",
+        "notes": [],
+        "unrecognized": [],
+        "calculation": [
+          { "step": "Score", "formula": "round_half_up(S_base)", "values": "40.0", "result": "40" }
+        ]
+      },
+      "permissions": {
+        "api": [
+          {
+            "name": "tabs",
+            "kind": "api",
+            "weight": 4,
+            "risk_label": "high",
+            "status": "justified",
+            "allows": "Access sensitive tab details such as URLs and titles across all open tabs.",
+            "legitimate_use": "Tab managers, bookmarking tools, or window organization assistants.",
+            "source_url": "https://developer.chrome.com/docs/extensions/reference/api/tabs",
+            "reviewed": true,
+            "evidence": ["Tab management keyword match"]
+          }
+        ],
+        "host": [],
+        "optional": []
+      },
+      "versions": [
+        { "version": "1.0.0", "captured_at": "2026-10-01T09:00:00Z" }
+      ],
+      "creep": {
+        "available": false,
+        "reason": "baseline_not_available",
+        "outcome": "No significant permission creep detected",
+        "summary": "Baseline not available.",
+        "added": [],
+        "removed": [],
+        "broadened": [],
+        "could_allow": [],
+        "alignment": { "status": "unclear", "text": "Baseline not available." },
+        "score_from": null,
+        "score_to": null,
+        "limitations": [
+          "Manifest lists requested capabilities, not proof of use.",
+          "AEGIS does not inspect extension code.",
+          "Descriptions are claims, not proof of intent.",
+          "Optional permissions require explicit runtime user consent.",
+          "Risk scores are heuristics under formula version 1."
+        ]
+      }
+    },
+    {
+      "id": "sample-ad-shield",
+      "name": "Sample Ad Shield",
+      "browser": "Google Chrome",
+      "version": "3.1.0",
+      "icon_url": null,
+      "developer": "Web Filters Inc",
+      "description": {
+        "text": "Block intrusive advertisements across the web.",
+        "origin": "manifest"
+      },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 70,
+        "risk_level": "high",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 50.0,
+        "host_score": 100.0,
+        "max_weight": 5,
+        "critical_flags": ["Critical permission requested: <all_urls>"],
+        "breakdown": [
+          { "label": "<all_urls>", "contribution": 50.0, "kind": "host" },
+          { "label": "declarativeNetRequest", "contribution": 20.0, "kind": "api" }
+        ],
+        "potential_score": 70,
+        "plain_summary": "Can read and change data on all websites you visit (high exposure).",
+        "notes": [],
+        "unrecognized": [],
+        "calculation": [
+          { "step": "Score", "formula": "round_half_up(Floor)", "values": "70", "result": "70" }
+        ]
+      },
+      "permissions": {
+        "api": [
+          {
+            "name": "declarativeNetRequest",
+            "kind": "api",
+            "weight": 2,
+            "risk_label": "low",
+            "status": "justified",
+            "allows": "Block or modify network requests declaratively.",
+            "legitimate_use": "Ad blocking and content filtering.",
+            "source_url": "https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest",
+            "reviewed": true,
+            "evidence": ["Ad blocking purpose match"]
+          }
+        ],
+        "host": [
+          {
+            "name": "<all_urls>",
+            "kind": "host",
+            "weight": 5,
+            "risk_label": "critical",
+            "status": "justified",
+            "allows": "Read and change all data on every website you visit.",
+            "legitimate_use": "Comprehensive ad blocker.",
+            "source_url": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
+            "reviewed": true,
+            "evidence": ["Ad blocking across all sites"]
+          }
+        ],
+        "optional": []
+      },
+      "versions": [
+        { "version": "3.1.0", "captured_at": "2026-10-10T11:00:00Z" },
+        { "version": "3.0.0", "captured_at": "2026-08-01T10:00:00Z" }
+      ],
+      "creep": {
+        "available": true,
+        "reason": null,
+        "outcome": "Significant increase in assessed permission exposure",
+        "summary": "1 added, 1 removed. 1 host scope(s) broadened. Risk score moved from 20 to 70.",
+        "added": [{ "name": "<all_urls>", "risk_label": "critical", "weight": 5, "kind": "host", "source": "host_permissions" }],
+        "removed": [{ "name": "https://adserver.com/*", "risk_label": "low", "weight": 1, "kind": "host", "source": "host_permissions" }],
+        "broadened": [
+          {
+            "from_pattern": "https://adserver.com/*",
+            "to_pattern": "<all_urls>",
+            "from_tier": "single_host",
+            "to_tier": "all_sites",
+            "explanation": "Host access broadened from 'https://adserver.com/*' (single_host) to '<all_urls>' (all_sites)"
+          }
+        ],
+        "could_allow": ["<all_urls>: Read and change all data on every website you visit."],
+        "alignment": { "status": "unclear", "text": "Purpose alignment has not been evaluated." },
+        "score_from": 20,
+        "score_to": 70,
+        "limitations": [
+          "Manifest lists requested capabilities, not proof of use.",
+          "AEGIS does not inspect extension code.",
+          "Descriptions are claims, not proof of intent.",
+          "Optional permissions require explicit runtime user consent.",
+          "Risk scores are heuristics under formula version 1."
+        ]
+      }
+    },
+    {
+      "id": "sample-minimal-util",
+      "name": "Sample Minimal Utility",
+      "browser": "Google Chrome",
+      "version": "1.0.0",
+      "icon_url": null,
+      "developer": "Open Utilities",
+      "description": {
+        "text": "A tiny helper that requires zero special browser access.",
+        "origin": "manifest"
+      },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 0,
+        "risk_level": "low",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 0.0,
+        "host_score": 0.0,
+        "max_weight": 0,
+        "critical_flags": [],
+        "breakdown": [],
+        "potential_score": 0,
+        "plain_summary": "This extension declares no permissions (low exposure).",
+        "notes": ["This extension declares no permissions."],
+        "unrecognized": [],
+        "calculation": [
+          { "step": "Score", "formula": "0.0 (no permissions requested)", "values": "empty", "result": "0" }
+        ]
+      },
+      "permissions": { "api": [], "host": [], "optional": [] },
+      "versions": [{ "version": "1.0.0", "captured_at": "2026-09-01T00:00:00Z" }],
+      "creep": {
+        "available": false,
+        "reason": "baseline_not_available",
+        "outcome": "No significant permission creep detected",
+        "summary": "Baseline not available.",
+        "added": [],
+        "removed": [],
+        "broadened": [],
+        "could_allow": [],
+        "alignment": { "status": "unclear", "text": "Baseline not available." },
+        "score_from": null,
+        "score_to": null,
+        "limitations": [
+          "Manifest lists requested capabilities, not proof of use.",
+          "AEGIS does not inspect extension code."
+        ]
+      }
+    },
+    {
+      "id": "sample-no-desc",
+      "name": "Sample No Description",
+      "browser": "Microsoft Edge",
+      "version": "1.0.0",
+      "icon_url": null,
+      "developer": null,
+      "description": { "text": null, "origin": "unavailable" },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 20,
+        "risk_level": "low",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 20.0,
+        "host_score": 0.0,
+        "max_weight": 1,
+        "critical_flags": [],
+        "breakdown": [{ "label": "storage", "contribution": 20.0, "kind": "api" }],
+        "potential_score": 20,
+        "plain_summary": "Requests 1 permission(s) with minimal broad exposure risk.",
+        "notes": [],
+        "unrecognized": [],
+        "calculation": [{ "step": "Score", "formula": "round_half_up(20.0)", "values": "20", "result": "20" }]
+      },
+      "permissions": {
+        "api": [
+          {
+            "name": "storage",
+            "kind": "api",
+            "weight": 1,
+            "risk_label": "low",
+            "status": "justified",
+            "allows": "Store extension settings.",
+            "legitimate_use": "Persisting preferences.",
+            "source_url": null,
+            "reviewed": true,
+            "evidence": []
+          }
+        ],
+        "host": [],
+        "optional": []
+      },
+      "versions": [{ "version": "1.0.0", "captured_at": "2026-09-10T00:00:00Z" }],
+      "creep": {
+        "available": false,
+        "reason": "baseline_not_available",
+        "outcome": "No significant permission creep detected",
+        "summary": "Baseline not available.",
+        "added": [],
+        "removed": [],
+        "broadened": [],
+        "could_allow": [],
+        "alignment": { "status": "unclear", "text": "Baseline not available." },
+        "score_from": null,
+        "score_to": null,
+        "limitations": ["Manifest lists requested capabilities."]
+      }
+    },
+    {
+      "id": "sample-xss-name",
+      "name": "<img src=x onerror=alert(1)>",
+      "browser": "Google Chrome",
+      "version": "1.0.0",
+      "icon_url": null,
+      "developer": "Security Test Suite",
+      "description": {
+        "text": "Payload testing name sanitization and XSS prevention.",
+        "origin": "manifest"
+      },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 20,
+        "risk_level": "low",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 20.0,
+        "host_score": 0.0,
+        "max_weight": 1,
+        "critical_flags": [],
+        "breakdown": [{ "label": "storage", "contribution": 20.0, "kind": "api" }],
+        "potential_score": 20,
+        "plain_summary": "Security test fixture.",
+        "notes": [],
+        "unrecognized": [],
+        "calculation": [{ "step": "Score", "formula": "20", "values": "20", "result": "20" }]
+      },
+      "permissions": {
+        "api": [
+          {
+            "name": "storage",
+            "kind": "api",
+            "weight": 1,
+            "risk_label": "low",
+            "status": "justified",
+            "allows": "Store extension settings.",
+            "legitimate_use": "Test.",
+            "source_url": null,
+            "reviewed": true,
+            "evidence": []
+          }
+        ],
+        "host": [],
+        "optional": []
+      },
+      "versions": [{ "version": "1.0.0", "captured_at": "2026-10-01T00:00:00Z" }],
+      "creep": {
+        "available": false,
+        "reason": "baseline_not_available",
+        "outcome": "No significant permission creep detected",
+        "summary": "Baseline not available.",
+        "added": [],
+        "removed": [],
+        "broadened": [],
+        "could_allow": [],
+        "alignment": { "status": "unclear", "text": "Baseline not available." },
+        "score_from": null,
+        "score_to": null,
+        "limitations": ["Test fixture."]
+      }
+    },
+    {
+      "id": "sample-long-name",
+      "name": "Very Long Extension Name Designed To Test Responsive Layouts And CSS Text Overflow Ellipsis Handling Without Breaking Panel Boundaries Across Multiple Breakpoints Or Causing Horizontal Page Scrolling",
+      "browser": "Brave",
+      "version": "1.0.0",
+      "icon_url": null,
+      "developer": "Layout Test Lab",
+      "description": {
+        "text": "Validates boundary integrity with lengthy names.",
+        "origin": "manifest"
+      },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 20,
+        "risk_level": "low",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 20.0,
+        "host_score": 0.0,
+        "max_weight": 1,
+        "critical_flags": [],
+        "breakdown": [{ "label": "storage", "contribution": 20.0, "kind": "api" }],
+        "potential_score": 20,
+        "plain_summary": "Layout test fixture.",
+        "notes": [],
+        "unrecognized": [],
+        "calculation": [{ "step": "Score", "formula": "20", "values": "20", "result": "20" }]
+      },
+      "permissions": {
+        "api": [
+          {
+            "name": "storage",
+            "kind": "api",
+            "weight": 1,
+            "risk_label": "low",
+            "status": "justified",
+            "allows": "Store extension settings.",
+            "legitimate_use": "Test.",
+            "source_url": null,
+            "reviewed": true,
+            "evidence": []
+          }
+        ],
+        "host": [],
+        "optional": []
+      },
+      "versions": [{ "version": "1.0.0", "captured_at": "2026-10-01T00:00:00Z" }],
+      "creep": {
+        "available": false,
+        "reason": "baseline_not_available",
+        "outcome": "No significant permission creep detected",
+        "summary": "Baseline not available.",
+        "added": [],
+        "removed": [],
+        "broadened": [],
+        "could_allow": [],
+        "alignment": { "status": "unclear", "text": "Baseline not available." },
+        "score_from": null,
+        "score_to": null,
+        "limitations": ["Test fixture."]
+      }
+    },
+    {
+      "id": "sample-rtl-name",
+      "name": "إضافة تجريبية لمزامنة الملاحظات وحفظ الروابط",
+      "browser": "Opera",
+      "version": "1.0.0",
+      "icon_url": null,
+      "developer": "مختبر التجربة",
+      "description": {
+        "text": "تطبيق تجريبي لفحص النصوص العربية ومحاذاة اليمين إلى اليسار.",
+        "origin": "manifest"
+      },
+      "assessment": {
+        "formula_version": "1",
+        "knowledge_version": "2026.10.1",
+        "risk_score": 20,
+        "risk_level": "low",
+        "thresholds": { "low_max": 34, "mid_max": 69 },
+        "api_score": 20.0,
+        "host_score": 0.0,
+        "max_weight": 1,
+        "critical_flags": [],
+        "breakdown": [{ "label": "storage", "contribution": 20.0, "kind": "api" }],
+        "potential_score": 20,
+        "plain_summary": "RTL text test fixture.",
+        "notes": [],
+        "unrecognized": [],
+        "calculation": [{ "step": "Score", "formula": "20", "values": "20", "result": "20" }]
+      },
+      "permissions": {
+        "api": [
+          {
+            "name": "storage",
+            "kind": "api",
+            "weight": 1,
+            "risk_label": "low",
+            "status": "justified",
+            "allows": "Store extension settings.",
+            "legitimate_use": "Test.",
+            "source_url": null,
+            "reviewed": true,
+            "evidence": []
+          }
+        ],
+        "host": [],
+        "optional": []
+      },
+      "versions": [{ "version": "1.0.0", "captured_at": "2026-10-01T00:00:00Z" }],
+      "creep": {
+        "available": false,
+        "reason": "baseline_not_available",
+        "outcome": "No significant permission creep detected",
+        "summary": "Baseline not available.",
+        "added": [],
+        "removed": [],
+        "broadened": [],
+        "could_allow": [],
+        "alignment": { "status": "unclear", "text": "Baseline not available." },
+        "score_from": null,
+        "score_to": null,
+        "limitations": ["Test fixture."]
+      }
+    }
+  ]
+}

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AEGIS — Browser-Extension Permission Creep Auditor</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo/favicon.svg">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/motion.css">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <!-- Animated Indigo Threads Canvas -->
+  <canvas id="threads" aria-hidden="true"></canvas>
+
+  <!-- Polite Live Region for Screen Readers (FR-F1, FR-F3) -->
+  <div id="status-announcer" class="sr-only" aria-live="polite"></div>
+
+  <!-- Mobile Top Bar (< 1024px) -->
+  <header class="mobile-header">
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle extension menu" aria-expanded="false" aria-controls="sidebar">
+      <svg class="icon"><use href="assets/icons.svg#icon-menu"></use></svg>
+    </button>
+    <svg width="24" height="24" aria-hidden="true"><use href="#aegis-logo"></use></svg>
+    <span id="mobile-header-title" class="mobile-header-title">AEGIS</span>
+  </header>
+
+  <!-- Main Shell -->
+  <div class="app-shell">
+    <div id="drawer-backdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
+    <!-- Navigation Sidebar -->
+    <nav id="sidebar" class="sidebar" aria-label="Extensions">
+      <div class="sidebar-header">
+        <svg width="28" height="28" aria-hidden="true"><use href="#aegis-logo"></use></svg>
+        <span class="wordmark">AEGIS</span>
+      </div>
+
+      <div class="sidebar-search-area">
+        <div class="search-box" role="search">
+          <svg class="icon"><use href="assets/icons.svg#icon-search"></use></svg>
+          <input type="text" id="search-input" class="search-input" placeholder="Search extensions" aria-label="Search extensions">
+          <button id="search-clear-btn" class="search-clear-btn is-hidden" aria-label="Clear search">
+            <svg class="icon"><use href="assets/icons.svg#icon-close"></use></svg>
+          </button>
+        </div>
+        <div id="search-count" class="search-count" aria-live="polite"></div>
+      </div>
+
+      <div id="extension-list" class="sidebar-list-container" role="list">
+        <div class="state-message">Loading extensions...</div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div id="fixture-notice" class="fixture-banner is-hidden">
+          Sample data from dev mock API
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main id="main" class="main-content" tabindex="-1">
+      <div id="content-column" class="content-column">
+        <!-- Rendered dynamically by render/*.js -->
+        <div id="empty-state" class="panel state-message">
+          <svg width="64" height="64" aria-hidden="true"><use href="#aegis-logo"></use></svg>
+          <h2>No extension selected</h2>
+          <p>Select an extension from the sidebar to inspect requested permissions and creep history.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Reusable SVG Symbol for AEGIS Placeholder Logo Mark (D-14) -->
+  <svg class="is-hidden" aria-hidden="true">
+    <symbol id="aegis-logo" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#5B5BF0"/>
+      <path d="M16 6L26 11V18C26 23.5 21.7 28.1 16 29C10.3 28.1 6 23.5 6 18V11L16 6Z" fill="#07061A" stroke="#9A9AFF" stroke-width="1.5" stroke-linejoin="round"/>
+      <circle cx="16" cy="17" r="3" fill="#5B5BF0"/>
+    </symbol>
+  </svg>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

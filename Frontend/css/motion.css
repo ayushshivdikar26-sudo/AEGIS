@@ -1,0 +1,51 @@
+/* Motion Specifications (PRD s7.1 & Part 1 s8) */
+
+/* Page Load Main Panel Entrance (Page Load Only) */
+@keyframes panelEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.main-content {
+  animation: panelEntrance 500ms var(--ease) forwards;
+}
+
+/* Reduced Motion Overrides */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .main-content {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .gauge-needle {
+    transition: none !important;
+  }
+
+  .ext-risk-bar-fill {
+    transition: none !important;
+  }
+
+  .perm-details {
+    transition: none !important;
+  }
+
+  .sidebar {
+    transition: none !important;
+  }
+}

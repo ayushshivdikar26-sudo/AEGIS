@@ -1,0 +1,43 @@
+:root {
+  /* Core Deep Indigo Palette (PRD s7.1) */
+  --bg: #07061A;
+  --surface: #0F0E2A;
+  --surface-2: #151338;
+  --border: #2A2760;
+  --accent: #5B5BF0;
+  --accent-text: #8B8BFF;
+  --thread-glow: #9A9AFF;
+  --text: #F5F5FF;
+  --text-muted: #A9A8D4;
+
+  /* Semantic Risk Colors */
+  --risk-low: #22C55E;
+  --risk-mid: #F59E0B;
+  --risk-high: #EF4444;
+
+  /* Thread Color Ramp (Used strictly by threads.js) */
+  --thread-1: #2B2A8F;
+  --thread-2: #4747E0;
+  --thread-3: #6B6BF5;
+  --thread-4: #9A9AFF;
+
+  /* Strict 4px Base Spacing Scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  /* Shape and Transition */
+  --radius: 8px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* Fixed Type Scale (12, 14, 16, 20, 28) */
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 20px;
+  --text-xl: 28px;
+}
