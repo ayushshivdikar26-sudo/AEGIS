@@ -1,0 +1,23 @@
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+exclude = [".venv", ".git", "node_modules"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",   # Line length handled by formatter
+    "B008",   # Do not perform function calls in argument defaults (standard for FastAPI Depends/Query/File/Form)
+    "B904",   # Within an except clause, raise exceptions with raise ... from
+    "UP042",  # Class ScopeTier inherits from both str and Enum
+    "SIM108", # Use ternary operator instead of if-else
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["Backend"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_unused_configs = true
+ignore_missing_imports = true
+exclude = ["\\.venv"]

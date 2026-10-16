@@ -12,7 +12,7 @@ DOCS_RULES_PATH = Path(__file__).resolve().parent.parent.parent / "docs" / "RULE
 
 def test_rules_doc_not_stale():
     assert DOCS_RULES_PATH.exists(), "docs/RULES.md does not exist"
-    with open(DOCS_RULES_PATH, "r", encoding="utf-8") as f:
+    with open(DOCS_RULES_PATH, encoding="utf-8") as f:
         committed_content = f.read()
 
     fresh_content = generate_rules_markdown()

@@ -233,6 +233,4 @@ def test_section_error_isolation(page: Page):
     expect(page.locator("#gauge-section")).to_be_visible()
 
     # Permissions shows retry button
-    expect(
-        page.locator('#content-column:has-text("Failed to load permissions.")')
-    ).to_be_visible()
+    expect(page.locator('#content-column:has-text("Failed to load permissions.")')).to_be_visible()

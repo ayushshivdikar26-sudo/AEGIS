@@ -88,12 +88,8 @@ def compare(
 
     api_group = ComparisonGroup(
         added=[_build_comparison_item(p, "api", "permissions", kb) for p in api_added],
-        removed=[
-            _build_comparison_item(p, "api", "permissions", kb) for p in api_removed
-        ],
-        retained=[
-            _build_comparison_item(p, "api", "permissions", kb) for p in api_retained
-        ],
+        removed=[_build_comparison_item(p, "api", "permissions", kb) for p in api_removed],
+        retained=[_build_comparison_item(p, "api", "permissions", kb) for p in api_retained],
     )
 
     # 2. Host permissions diff & broadening
@@ -110,9 +106,7 @@ def compare(
             if a != o and covers(a, o):
                 t_old = scope_tier(o).value
                 t_new = scope_tier(a).value
-                explanation = (
-                    f"Host access broadened from '{o}' ({t_old}) to '{a}' ({t_new})"
-                )
+                explanation = f"Host access broadened from '{o}' ({t_old}) to '{a}' ({t_new})"
                 broadened.append(
                     BroadenedItem(
                         from_pattern=o,
@@ -143,14 +137,8 @@ def compare(
 
     host_group = HostComparisonGroup(
         added=host_added_items,
-        removed=[
-            _build_comparison_item(p, "host", "host_permissions", kb)
-            for p in host_removed
-        ],
-        retained=[
-            _build_comparison_item(p, "host", "host_permissions", kb)
-            for p in host_retained
-        ],
+        removed=[_build_comparison_item(p, "host", "host_permissions", kb) for p in host_removed],
+        retained=[_build_comparison_item(p, "host", "host_permissions", kb) for p in host_retained],
         broadened=broadened,
     )
 
@@ -168,26 +156,14 @@ def compare(
     opt_removed_host = sorted(old_opt_host - new_opt_host)
     opt_retained_host = sorted(new_opt_host & old_opt_host)
 
-    opt_added = [
-        _build_comparison_item(p, "optional_api", "optional_permissions", kb)
-        for p in opt_added_api
-    ] + [
-        _build_comparison_item(p, "optional_host", "optional_permissions", kb)
-        for p in opt_added_host
+    opt_added = [_build_comparison_item(p, "optional_api", "optional_permissions", kb) for p in opt_added_api] + [
+        _build_comparison_item(p, "optional_host", "optional_permissions", kb) for p in opt_added_host
     ]
-    opt_removed = [
-        _build_comparison_item(p, "optional_api", "optional_permissions", kb)
-        for p in opt_removed_api
-    ] + [
-        _build_comparison_item(p, "optional_host", "optional_permissions", kb)
-        for p in opt_removed_host
+    opt_removed = [_build_comparison_item(p, "optional_api", "optional_permissions", kb) for p in opt_removed_api] + [
+        _build_comparison_item(p, "optional_host", "optional_permissions", kb) for p in opt_removed_host
     ]
-    opt_retained = [
-        _build_comparison_item(p, "optional_api", "optional_permissions", kb)
-        for p in opt_retained_api
-    ] + [
-        _build_comparison_item(p, "optional_host", "optional_permissions", kb)
-        for p in opt_retained_host
+    opt_retained = [_build_comparison_item(p, "optional_api", "optional_permissions", kb) for p in opt_retained_api] + [
+        _build_comparison_item(p, "optional_host", "optional_permissions", kb) for p in opt_retained_host
     ]
 
     opt_group = ComparisonGroup(
@@ -225,9 +201,7 @@ def assess_creep(
     delta_significant = kb.creep_config.get("delta_significant", 15)
 
     all_added = comparison.api.added + comparison.host.added + comparison.optional.added
-    all_removed = (
-        comparison.api.removed + comparison.host.removed + comparison.optional.removed
-    )
+    all_removed = comparison.api.removed + comparison.host.removed + comparison.optional.removed
 
     triggers: list[CreepTrigger] = []
 
@@ -366,12 +340,8 @@ def assess_creep(
     summary_parts = []
     summary_parts.append(f"{len(all_added)} added, {len(all_removed)} removed")
     if comparison.host.broadened:
-        summary_parts.append(
-            f"{len(comparison.host.broadened)} host scope(s) broadened"
-        )
-    summary_parts.append(
-        f"Risk score moved from {comparison.score_from} to {comparison.score_to}."
-    )
+        summary_parts.append(f"{len(comparison.host.broadened)} host scope(s) broadened")
+    summary_parts.append(f"Risk score moved from {comparison.score_from} to {comparison.score_to}.")
     summary = ". ".join(summary_parts)
 
     final_alignment = (

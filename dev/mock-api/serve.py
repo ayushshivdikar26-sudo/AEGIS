@@ -36,7 +36,7 @@ STRICT_CSP = (
 def load_dataset() -> dict:
     if not FIXTURES_FILE.exists():
         return {"extensions": []}
-    with open(FIXTURES_FILE, "r", encoding="utf-8") as f:
+    with open(FIXTURES_FILE, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -109,9 +109,7 @@ class MockApiHandler(http.server.BaseHTTPRequestHandler):
                         "version": ext["version"],
                         "icon_url": ext.get("icon_url"),
                         "risk_score": ext.get("assessment", {}).get("risk_score", 0),
-                        "risk_level": ext.get("assessment", {}).get(
-                            "risk_level", "low"
-                        ),
+                        "risk_level": ext.get("assessment", {}).get("risk_level", "low"),
                     }
                 )
             resp = {"source": "fixture", "extensions": list_items}
@@ -146,9 +144,7 @@ class MockApiHandler(http.server.BaseHTTPRequestHandler):
                 "version": ext["version"],
                 "icon_url": ext.get("icon_url"),
                 "developer": ext.get("developer"),
-                "description": ext.get(
-                    "description", {"text": None, "origin": "unavailable"}
-                ),
+                "description": ext.get("description", {"text": None, "origin": "unavailable"}),
                 "capabilities": {"ai_analysis": False},
                 "assessment": ext.get("assessment", {}),
             }
@@ -177,9 +173,7 @@ class MockApiHandler(http.server.BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_security_headers()
             self.wfile.write(
-                json.dumps(
-                    ext.get("permissions", {"api": [], "host": [], "optional": []})
-                ).encode("utf-8")
+                json.dumps(ext.get("permissions", {"api": [], "host": [], "optional": []})).encode("utf-8")
             )
             return
 
@@ -204,9 +198,7 @@ class MockApiHandler(http.server.BaseHTTPRequestHandler):
                 return
             self.send_response(200)
             self.send_security_headers()
-            self.wfile.write(
-                json.dumps({"versions": ext.get("versions", [])}).encode("utf-8")
-            )
+            self.wfile.write(json.dumps({"versions": ext.get("versions", [])}).encode("utf-8"))
             return
 
         # Pattern: /api/extensions/{id}/compare?from=&to=
@@ -240,27 +232,13 @@ class MockApiHandler(http.server.BaseHTTPRequestHandler):
                 "score_from": creep_data.get("score_from", 20),
                 "score_to": creep_data.get("score_to", 70),
                 "api": {
-                    "added": [
-                        i for i in creep_data.get("added", []) if i.get("kind") == "api"
-                    ],
-                    "removed": [
-                        i
-                        for i in creep_data.get("removed", [])
-                        if i.get("kind") == "api"
-                    ],
+                    "added": [i for i in creep_data.get("added", []) if i.get("kind") == "api"],
+                    "removed": [i for i in creep_data.get("removed", []) if i.get("kind") == "api"],
                     "retained": [{"name": "storage", "risk_label": "low"}],
                 },
                 "host": {
-                    "added": [
-                        i
-                        for i in creep_data.get("added", [])
-                        if i.get("kind") == "host"
-                    ],
-                    "removed": [
-                        i
-                        for i in creep_data.get("removed", [])
-                        if i.get("kind") == "host"
-                    ],
+                    "added": [i for i in creep_data.get("added", []) if i.get("kind") == "host"],
+                    "removed": [i for i in creep_data.get("removed", []) if i.get("kind") == "host"],
                     "retained": [],
                     "broadened": creep_data.get("broadened", []),
                 },
@@ -303,11 +281,7 @@ class MockApiHandler(http.server.BaseHTTPRequestHandler):
         # Unmatched API path
         self.send_response(404)
         self.send_security_headers()
-        self.wfile.write(
-            json.dumps(
-                {"error": {"code": "not_found", "message": "Unknown endpoint"}}
-            ).encode("utf-8")
-        )
+        self.wfile.write(json.dumps({"error": {"code": "not_found", "message": "Unknown endpoint"}}).encode("utf-8"))
 
     def handle_static(self, path: str):
         if path in ("", "/"):

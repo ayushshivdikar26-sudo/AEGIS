@@ -171,9 +171,7 @@ def parse_manifest(
             )
         raw_text = None
     else:
-        raise ManifestError(
-            "not_object", "Manifest input must be bytes, string, or JSON dictionary"
-        )
+        raise ManifestError("not_object", "Manifest input must be bytes, string, or JSON dictionary")
 
     sha256 = hashlib.sha256(raw_bytes).hexdigest()
 
@@ -188,9 +186,7 @@ def parse_manifest(
             d: dict[str, Any] = {}
             for k, v in pairs:
                 if k in seen:
-                    raise ManifestError(
-                        "duplicate_key", f"Duplicate key found in JSON object: {k}"
-                    )
+                    raise ManifestError("duplicate_key", f"Duplicate key found in JSON object: {k}")
                 seen.add(k)
                 d[k] = v
             return d
@@ -204,16 +200,12 @@ def parse_manifest(
         except json.JSONDecodeError as exc:
             raise ManifestError("not_json", f"Manifest is not valid JSON: {exc.msg}")
         except RecursionError:
-            raise ManifestError(
-                "too_deep", "Manifest JSON structure caused recursion limit"
-            )
+            raise ManifestError("too_deep", "Manifest JSON structure caused recursion limit")
     else:
         data = raw
 
     if not isinstance(data, dict):
-        raise ManifestError(
-            "not_object", "Manifest top-level entity must be a JSON object"
-        )
+        raise ManifestError("not_object", "Manifest top-level entity must be a JSON object")
 
     # 3. Depth and string/array boundary checks
     _check_depth(data)
@@ -229,9 +221,7 @@ def parse_manifest(
 
     raw_version = data.get("version")
     if not isinstance(raw_version, str) or not raw_version.strip():
-        raise ManifestError(
-            "missing_version", "Manifest field 'version' must be a non-empty string"
-        )
+        raise ManifestError("missing_version", "Manifest field 'version' must be a non-empty string")
     version = raw_version.strip()
     version_key = _parse_version_key(version)
 
@@ -241,15 +231,11 @@ def parse_manifest(
     # 6. Name and description resolution and sanitization
     raw_name = data.get("name", "")
     if not isinstance(raw_name, str):
-        raise ManifestError(
-            "invalid_field_type", "Manifest field 'name' must be a string"
-        )
+        raise ManifestError("invalid_field_type", "Manifest field 'name' must be a string")
 
     raw_desc = data.get("description")
     if raw_desc is not None and not isinstance(raw_desc, str):
-        raise ManifestError(
-            "invalid_field_type", "Manifest field 'description' must be a string"
-        )
+        raise ManifestError("invalid_field_type", "Manifest field 'description' must be a string")
 
     name_is_placeholder = False
     desc_is_placeholder = False
@@ -319,9 +305,7 @@ def parse_manifest(
     def _extract_list(field_name: str) -> list[str]:
         raw_list = data.get(field_name, [])
         if not isinstance(raw_list, list):
-            raise ManifestError(
-                "invalid_field_type", f"Manifest field '{field_name}' must be an array"
-            )
+            raise ManifestError("invalid_field_type", f"Manifest field '{field_name}' must be an array")
         if len(raw_list) > MAX_ARRAY_ITEMS:
             raise ManifestError(
                 "too_many_items",
@@ -330,9 +314,7 @@ def parse_manifest(
         items = []
         for x in raw_list:
             if not isinstance(x, str):
-                raise ManifestError(
-                    "invalid_field_type", f"Items in '{field_name}' must be strings"
-                )
+                raise ManifestError("invalid_field_type", f"Items in '{field_name}' must be strings")
             item = x.strip()
             if item:
                 items.append(item)
@@ -340,12 +322,8 @@ def parse_manifest(
 
     raw_permissions = _extract_list("permissions")
     raw_opt_permissions = _extract_list("optional_permissions")
-    raw_host_permissions = (
-        _extract_list("host_permissions") if manifest_version == 3 else []
-    )
-    raw_opt_host_permissions = (
-        _extract_list("optional_host_permissions") if manifest_version == 3 else []
-    )
+    raw_host_permissions = _extract_list("host_permissions") if manifest_version == 3 else []
+    raw_opt_host_permissions = _extract_list("optional_host_permissions") if manifest_version == 3 else []
 
     # Manifest V3 handling
     if manifest_version == 3:

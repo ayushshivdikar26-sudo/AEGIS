@@ -58,7 +58,7 @@ def text_array_sql(items: list[str]) -> str:
 
 
 def generate_seed_sql(seed_user_id: str = SYSTEM_SEED_USER_ID) -> str:
-    with open(FIXTURES_FILE, "r", encoding="utf-8") as f:
+    with open(FIXTURES_FILE, encoding="utf-8") as f:
         data = json.load(f)
 
     extensions = data.get("extensions", [])
@@ -89,9 +89,7 @@ def generate_seed_sql(seed_user_id: str = SYSTEM_SEED_USER_ID) -> str:
         browser = BROWSER_MAP.get(raw_browser, "other")
         name = ext.get("name", "Unknown Extension")
         desc_obj = ext.get("description", {})
-        desc_text = (
-            desc_obj.get("text") if isinstance(desc_obj, dict) else str(desc_obj)
-        )
+        desc_text = desc_obj.get("text") if isinstance(desc_obj, dict) else str(desc_obj)
         current_version = ext.get("version", "1.0.0")
 
         sql_lines.append(f"-- Extension: {name} ({ext_slug})")
@@ -115,9 +113,7 @@ def generate_seed_sql(seed_user_id: str = SYSTEM_SEED_USER_ID) -> str:
         snapshot_uuids = {}
         for ver_info in versions_list:
             v_str = ver_info["version"]
-            snap_uuid = str(
-                uuid.uuid5(NAMESPACE_EXT, f"aegis:snapshot:{ext_slug}:{v_str}")
-            )
+            snap_uuid = str(uuid.uuid5(NAMESPACE_EXT, f"aegis:snapshot:{ext_slug}:{v_str}"))
             snapshot_uuids[v_str] = snap_uuid
             v_key = parse_version_key(v_str)
             v_key_sql = f"array{v_key}" if v_key else "null"
@@ -133,9 +129,7 @@ def generate_seed_sql(seed_user_id: str = SYSTEM_SEED_USER_ID) -> str:
                 "optional_permissions": opt_perms,
             }
             manifest_json_str = json.dumps(synthetic_manifest).replace("'", "''")
-            sha256_mock = f"{snap_uuid.replace('-', '')}{snap_uuid.replace('-', '')}"[
-                :64
-            ]
+            sha256_mock = f"{snap_uuid.replace('-', '')}{snap_uuid.replace('-', '')}"[:64]
 
             sql_lines.append(
                 f"insert into public.extension_snapshots ("
@@ -157,20 +151,13 @@ def generate_seed_sql(seed_user_id: str = SYSTEM_SEED_USER_ID) -> str:
             from_sid = snapshot_uuids.get(from_v)
             to_sid = snapshot_uuids.get(to_v)
             if from_sid and to_sid:
-                creep_uuid = str(
-                    uuid.uuid5(NAMESPACE_EXT, f"aegis:creep:{ext_slug}:{from_v}:{to_v}")
-                )
+                creep_uuid = str(uuid.uuid5(NAMESPACE_EXT, f"aegis:creep:{ext_slug}:{from_v}:{to_v}"))
                 added = [i["name"] for i in creep_data.get("added", []) if "name" in i]
-                removed = [
-                    i["name"] for i in creep_data.get("removed", []) if "name" in i
-                ]
-                broadened = json.dumps(creep_data.get("broadened", [])).replace(
-                    "'", "''"
-                )
+                removed = [i["name"] for i in creep_data.get("removed", []) if "name" in i]
+                broadened = json.dumps(creep_data.get("broadened", [])).replace("'", "''")
                 outcome = (
                     "significant_increase"
-                    if creep_data.get("score_to", 0) - creep_data.get("score_from", 0)
-                    >= 15
+                    if creep_data.get("score_to", 0) - creep_data.get("score_from", 0) >= 15
                     else "no_significant_creep"
                 )
 

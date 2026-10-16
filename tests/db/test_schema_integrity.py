@@ -33,15 +33,12 @@ def test_schema_tables_and_columns():
         "public.ai_analyses",
     ]
     for table in required_tables:
-        assert (
-            f"create table if not exists {table}" in content
-            or f"create table {table}" in content
-        ), f"Table {table} not found in 0001_initial_schema.sql"
+        assert f"create table if not exists {table}" in content or f"create table {table}" in content, (
+            f"Table {table} not found in 0001_initial_schema.sql"
+        )
 
     # Check key columns
-    assert (
-        "browser in ('chrome', 'edge', 'firefox', 'brave', 'opera', 'other')" in content
-    )
+    assert "browser in ('chrome', 'edge', 'firefox', 'brave', 'opera', 'other')" in content
     assert "is_public" in content
     assert "source in ('user', 'catalog_seed', 'fixture')" in content
     assert "manifest_version in (2, 3)" in content
@@ -92,12 +89,8 @@ def test_rls_policies_and_privileges():
     ]
 
     for table in tables:
-        assert f"alter table {table} enable row level security;" in content, (
-            f"RLS not enabled on {table}"
-        )
-        assert f"alter table {table} force row level security;" in content, (
-            f"RLS not forced on {table}"
-        )
+        assert f"alter table {table} enable row level security;" in content, f"RLS not enabled on {table}"
+        assert f"alter table {table} force row level security;" in content, f"RLS not forced on {table}"
 
     # Verify revoke from anon
     assert "revoke all on all tables in schema public from anon;" in content
@@ -109,18 +102,9 @@ def test_rls_policies_and_privileges():
     assert "(select auth.uid())" in content
 
     # Verify snapshots and creep records have NO update policy and revoke update
-    assert (
-        "revoke update, delete on public.extension_snapshots from authenticated;"
-        in content
-    )
-    assert (
-        "revoke update, delete on public.snapshot_permissions from authenticated;"
-        in content
-    )
-    assert (
-        "revoke update, delete on public.permission_creep_records from authenticated;"
-        in content
-    )
+    assert "revoke update, delete on public.extension_snapshots from authenticated;" in content
+    assert "revoke update, delete on public.snapshot_permissions from authenticated;" in content
+    assert "revoke update, delete on public.permission_creep_records from authenticated;" in content
 
 
 def test_storage_bucket_and_policies():

@@ -62,14 +62,25 @@ export async function request(path, { method = "GET", body = null, section = nul
     const headers = {
       Accept: "application/json",
     };
-    if (body && typeof body === "object") {
+
+    if (method !== "GET" && method !== "HEAD") {
+      headers["X-AEGIS-CSRF"] = "1";
+    }
+
+    let reqBody = null;
+    if (body instanceof FormData) {
+      reqBody = body;
+    } else if (body && typeof body === "object") {
       headers["Content-Type"] = "application/json";
+      reqBody = JSON.stringify(body);
+    } else if (body) {
+      reqBody = body;
     }
 
     const response = await fetch(path, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : null,
+      body: reqBody,
       credentials: "same-origin",
       signal: controller.signal,
     });
@@ -147,3 +158,31 @@ export async function getCreep(id) {
   const encId = encodeURIComponent(id);
   return request(`/api/extensions/${encId}/creep`, { section: "creep" });
 }
+
+// Auth API Methods
+export async function authSignup(email, password) {
+  return request("/api/auth/signup", { method: "POST", body: { email, password } });
+}
+
+export async function authLogin(email, password) {
+  return request("/api/auth/login", { method: "POST", body: { email, password } });
+}
+
+export async function authLogout() {
+  return request("/api/auth/logout", { method: "POST" });
+}
+
+export async function authMe() {
+  return request("/api/auth/me");
+}
+
+// Import & Delete Methods
+export async function importExtension(formData) {
+  return request("/api/extensions/import", { method: "POST", body: formData });
+}
+
+export async function deleteExtension(id) {
+  const encId = encodeURIComponent(id);
+  return request(`/api/extensions/${encId}`, { method: "DELETE" });
+}
+

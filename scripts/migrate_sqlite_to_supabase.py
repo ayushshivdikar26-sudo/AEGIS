@@ -16,7 +16,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
-from Backend.core.manifest_parser import ManifestError, parse_manifest
+from Backend.core.manifest_parser import ManifestError, parse_manifest  # noqa: E402
 
 
 def check_sqlite_database(db_path: Path) -> tuple[bool, int, list[dict]]:
@@ -29,9 +29,7 @@ def check_sqlite_database(db_path: Path) -> tuple[bool, int, list[dict]]:
 
     try:
         # Check tables
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('extensions', 'snapshots')"
-        )
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('extensions', 'snapshots')")
         tables = [row["name"] for row in cursor.fetchall()]
         if not tables:
             return True, 0, []
@@ -59,18 +57,14 @@ def run_migration(db_path: Path, user_id_str: str | None, apply: bool):
     exists, ext_count, _rows = check_sqlite_database(db_path)
     if not exists:
         print(f"Notice: SQLite database file not found at {db_path}.")
-        print(
-            "AEGIS was built as a clean greenfield reimplementation with no legacy SQLite database."
-        )
+        print("AEGIS was built as a clean greenfield reimplementation with no legacy SQLite database.")
         print("Nothing to migrate.")
         return 0
 
     print(f"Found {ext_count} extension rows in SQLite database.")
 
     if not user_id_str:
-        print(
-            "Error: Target user ID is required. Pass --user-id <uuid>.", file=sys.stderr
-        )
+        print("Error: Target user ID is required. Pass --user-id <uuid>.", file=sys.stderr)
         return 1
 
     try:
@@ -110,9 +104,7 @@ def run_migration(db_path: Path, user_id_str: str | None, apply: bool):
     for snap in snapshots:
         manifest_raw = snap.get("manifest") or snap.get("raw_manifest")
         if not manifest_raw:
-            skipped_rows.append(
-                (snap.get("id"), snap.get("version"), "Empty manifest payload")
-            )
+            skipped_rows.append((snap.get("id"), snap.get("version"), "Empty manifest payload"))
             continue
         try:
             parsed = parse_manifest(manifest_raw)
@@ -128,9 +120,7 @@ def run_migration(db_path: Path, user_id_str: str | None, apply: bool):
 
     if not apply:
         print("\nDry run completed successfully. Zero changes made to Supabase.")
-        print(
-            "To apply live changes, run with --apply and ensure SUPABASE_URL and SUPABASE_SECRET_KEY are set."
-        )
+        print("To apply live changes, run with --apply and ensure SUPABASE_URL and SUPABASE_SECRET_KEY are set.")
     else:
         print(f"\nApplying migration to Supabase for target user: {target_user_id}...")
         # Live migration code will execute via Supabase client when configured
@@ -140,9 +130,7 @@ def run_migration(db_path: Path, user_id_str: str | None, apply: bool):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Migrate legacy SQLite data to Supabase."
-    )
+    parser = argparse.ArgumentParser(description="Migrate legacy SQLite data to Supabase.")
     parser.add_argument(
         "--db-path",
         type=Path,

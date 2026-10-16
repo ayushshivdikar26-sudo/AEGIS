@@ -128,18 +128,14 @@ def test_utf8_bom_handling():
 
 
 def test_duplicate_key_rejection():
-    raw_json = (
-        '{"manifest_version": 3, "name": "Dup", "name": "Dup2", "version": "1.0"}'
-    )
+    raw_json = '{"manifest_version": 3, "name": "Dup", "name": "Dup2", "version": "1.0"}'
     with pytest.raises(ManifestError) as exc:
         parse_manifest(raw_json)
     assert exc.value.code == "duplicate_key"
 
 
 def test_nan_infinity_rejection():
-    raw_json = (
-        '{"manifest_version": 3, "name": "NaN Test", "version": "1.0", "val": NaN}'
-    )
+    raw_json = '{"manifest_version": 3, "name": "NaN Test", "version": "1.0", "val": NaN}'
     with pytest.raises(ManifestError) as exc:
         parse_manifest(raw_json)
     assert exc.value.code == "not_json"
@@ -246,9 +242,7 @@ def test_invalid_field_types():
 
 
 def test_version_key_variations():
-    m1 = parse_manifest(
-        {"manifest_version": 3, "name": "VKey1", "version": "1.2.3.4.5"}
-    )
+    m1 = parse_manifest({"manifest_version": 3, "name": "VKey1", "version": "1.2.3.4.5"})
     assert m1.version_key is None
 
     m2 = parse_manifest({"manifest_version": 3, "name": "VKey2", "version": "1.beta"})

@@ -42,9 +42,7 @@ TEST_PATTERN_CASES = [
 ]
 
 
-@pytest.mark.parametrize(
-    "pattern,expected_tier,expected_desc_substr", TEST_PATTERN_CASES
-)
+@pytest.mark.parametrize("pattern,expected_tier,expected_desc_substr", TEST_PATTERN_CASES)
 def test_scope_tiers_and_descriptions(pattern, expected_tier, expected_desc_substr):
     parsed = parse_match_pattern(pattern)
     assert parsed is not None
