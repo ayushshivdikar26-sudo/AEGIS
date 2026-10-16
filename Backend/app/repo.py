@@ -25,6 +25,79 @@ def reset_mock_store() -> None:
     _MOCK_STORE = {"extensions": {}, "snapshots": {}, "creep_records": {}}
 
 
+def seed_mock_store_from_fixtures() -> None:
+    """Populates in-memory store with deterministic seed fixtures from dataset.json."""
+    import json
+    from pathlib import Path
+
+    if _MOCK_STORE["extensions"]:
+        return
+
+    dataset_path = Path(__file__).resolve().parents[2] / "dev" / "mock-api" / "fixtures" / "dataset.json"
+    if not dataset_path.exists():
+        return
+
+    with open(dataset_path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    user_id = "00000000-0000-0000-0000-000000000001"
+    for ext in data.get("extensions", []):
+        ext_id = ext["id"]
+        desc_obj = ext.get("description", {})
+        desc_text = desc_obj.get("text") if isinstance(desc_obj, dict) else str(desc_obj or "")
+
+        _MOCK_STORE["extensions"][ext_id] = {
+            "id": ext_id,
+            "user_id": user_id,
+            "browser": ext.get("browser", "chrome").lower().replace("google ", ""),
+            "store_id": ext_id,
+            "name": ext["name"],
+            "is_public": True,
+            "icon_path": ext.get("icon_url"),
+            "description": desc_text,
+            "updated_at": "2026-10-15T12:00:00Z",
+        }
+
+        perms = ext.get("permissions", {})
+        versions_list = ext.get(
+            "versions", [{"version": ext.get("version", "1.0.0"), "captured_at": "2026-10-15T12:00:00Z"}]
+        )
+        for v_entry in versions_list:
+            v_str = v_entry["version"]
+            v_key = [int(p) for p in v_str.split(".") if p.isdigit()]
+            snap_id = f"snap-{ext_id}-{v_str}"
+
+            api_list = [p["name"] if isinstance(p, dict) else str(p) for p in perms.get("api", [])]
+            host_list = [p["name"] if isinstance(p, dict) else str(p) for p in perms.get("host", [])]
+            opt_list = [p["name"] if isinstance(p, dict) else str(p) for p in perms.get("optional", [])]
+
+            if ext_id == "sample-notes-sync" and v_str in ("2.3.0", "2.0.0"):
+                host_list = ["https://example.com/*"]
+                api_list = ["storage", "alarms"]
+            elif ext_id == "sample-ad-shield" and v_str == "3.0.0":
+                host_list = ["https://adserver.com/*"]
+
+            _MOCK_STORE["snapshots"][snap_id] = {
+                "id": snap_id,
+                "extension_id": ext_id,
+                "user_id": user_id,
+                "version": v_str,
+                "version_key": v_key,
+                "manifest_version": 3,
+                "name": ext["name"],
+                "description": desc_text,
+                "api_permissions": api_list,
+                "host_permissions": host_list,
+                "optional_api_permissions": [p for p in opt_list if not str(p).startswith(("*", "http", "file", "<"))],
+                "optional_host_permissions": [p for p in opt_list if str(p).startswith(("*", "http", "file", "<"))],
+                "content_script_matches": [],
+                "features": [],
+                "manifest": {},
+                "manifest_sha256": f"mock_sha_{ext_id}_{v_str}",
+                "captured_at": v_entry.get("captured_at", "2026-10-15T12:00:00Z"),
+            }
+
+
 class Repository:
     def __init__(self, client: Client | None = None, use_mock: bool = False):
         self.client = client

@@ -95,6 +95,15 @@ def create_app() -> FastAPI:
     if FRONTEND_DIR.exists():
         app.mount("/", SecureStaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")
 
+    @app.on_event("startup")
+    async def startup_seed():
+        import sys
+
+        from Backend.app.repo import seed_mock_store_from_fixtures
+
+        if "pytest" not in sys.modules:
+            seed_mock_store_from_fixtures()
+
     return app
 
 
