@@ -16,6 +16,13 @@ from Backend.app.logging_setup import logger
 
 # Initialize Redis client for heartbeat & fail-closed verification
 _redis_client: redis.Redis | None = None
+_IN_MEMORY_RATE_LIMITS: dict[str, list[float]] = {}
+
+
+def reset_rate_limits() -> None:
+    """Clears in-memory rate limits for test isolation."""
+    global _IN_MEMORY_RATE_LIMITS
+    _IN_MEMORY_RATE_LIMITS = {}
 
 
 def get_redis_client() -> redis.Redis | None:
@@ -64,9 +71,9 @@ def enforce_critical_route_rate_limit(
 ) -> None:
     """
     Enforces rate limits on critical routes (login, signup, import).
-    FAIL-CLOSED: If Redis is configured but unavailable, denies request with 503.
+    FAIL-CLOSED: If Redis is configured but unavailable in production, denies request with 503.
     """
-    # If production or Redis URI is set, check Redis connectivity
+    # If production, check Redis connectivity and fail closed
     if settings.ENVIRONMENT == "production" and not is_redis_available():
         logger.error(f"FAIL-CLOSED: Redis rate limiter unavailable for critical route {route_name}. Denying request.")
         raise AppError(
@@ -97,3 +104,17 @@ def enforce_critical_route_rate_limit(
                     code="rate_limiter_unavailable",
                     status_code=503,
                 )
+    else:
+        # Sliding window in-memory fallback for local testing
+        import time
+
+        now = time.time()
+        timestamps = _IN_MEMORY_RATE_LIMITS.setdefault(key, [])
+        timestamps[:] = [t for t in timestamps if now - t < window_seconds]
+        if len(timestamps) >= max_requests:
+            retry_after = int(window_seconds - (now - timestamps[0])) + 1
+            raise RateLimitExceededError(
+                f"Too many requests for {route_name}. Try again in {retry_after} seconds.",
+                retry_after=max(1, retry_after),
+            )
+        timestamps.append(now)

@@ -347,7 +347,7 @@
 }
 
 .perm-row-btn:hover {
-  background-color: #1a1842;
+  background-color: var(--surface-3);
 }
 
 .perm-row-summary {
@@ -512,7 +512,7 @@
 }
 
 .btn-primary:hover {
-  background-color: #4a4ae0;
+  background-color: #1D4ED8;
 }
 
 .btn-secondary {
@@ -522,7 +522,7 @@
 }
 
 .btn-secondary:hover {
-  background-color: #1e1b4b;
+  background-color: var(--surface-3);
 }
 
 /* Empty & Error States */

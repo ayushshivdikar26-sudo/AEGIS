@@ -58,7 +58,7 @@
   height: 100vh;
   position: sticky;
   top: 0;
-  background-color: var(--surface);
+  background: var(--surface-card);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
@@ -116,11 +116,12 @@
   gap: var(--s-5); /* 24px gap between opaque panels */
 }
 
-/* Opaque Panel Foundation */
+/* Modern Slate / Navy Panel Foundation (Matching AEGIS DUMMY) */
 .panel {
-  background-color: var(--surface);
+  background: var(--surface-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
   padding: var(--s-5);
   display: flex;
   flex-direction: column;
@@ -132,7 +133,7 @@
   display: none;
   position: fixed;
   inset: 0;
-  background-color: rgba(7, 6, 26, 0.7);
+  background-color: rgba(2, 6, 23, 0.75);
   z-index: 90;
 }
 

@@ -59,3 +59,7 @@ Thumbs.db
 
 # Dev Mock Data (excluded from production packaging)
 dev/mock-api/__pycache__/
+
+# Runtime extracted browser extension icons
+Frontend/assets/installed_icons/*
+!Frontend/assets/installed_icons/.gitkeep

@@ -24,26 +24,54 @@ export function renderGauge(assessmentData) {
     h("div", { className: "section-label", id: "gauge-heading" }, "Risk Assessment")
   );
 
-  // SVG Gauge Semicircle
+  // SVG Gauge Semicircle with smooth gradient
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 240 140");
   svg.setAttribute("class", "gauge-svg");
 
-  // Three flat arc segments with small gap
-  const arcLow = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  arcLow.setAttribute("d", arcPath(120, 120, 100, 0, thresholds.low_max - 0.5));
-  arcLow.setAttribute("class", "gauge-arc-segment");
-  arcLow.setAttribute("stroke", "var(--risk-low)");
+  // Linear Gradient definition across semicircle
+  const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+  const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
+  grad.setAttribute("id", "gauge-gradient");
+  grad.setAttribute("x1", "0%");
+  grad.setAttribute("y1", "0%");
+  grad.setAttribute("x2", "100%");
+  grad.setAttribute("y2", "0%");
 
-  const arcMid = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  arcMid.setAttribute("d", arcPath(120, 120, 100, thresholds.low_max + 0.5, thresholds.mid_max - 0.5));
-  arcMid.setAttribute("class", "gauge-arc-segment");
-  arcMid.setAttribute("stroke", "var(--risk-mid)");
+  const stops = [
+    { offset: "0%", color: "#22C55E" },
+    { offset: "35%", color: "#84CC16" },
+    { offset: "65%", color: "#F59E0B" },
+    { offset: "100%", color: "#EF4444" },
+  ];
+  for (const s of stops) {
+    const stopEl = document.createElementNS("http://www.w3.org/2000/svg", "stop");
+    stopEl.setAttribute("offset", s.offset);
+    stopEl.setAttribute("stop-color", s.color);
+    grad.appendChild(stopEl);
+  }
+  defs.appendChild(grad);
+  svg.appendChild(defs);
 
-  const arcHigh = document.createElementNS("http://www.w3.org/2000/svg", "path");
-  arcHigh.setAttribute("d", arcPath(120, 120, 100, thresholds.mid_max + 0.5, 100));
-  arcHigh.setAttribute("class", "gauge-arc-segment");
-  arcHigh.setAttribute("stroke", "var(--risk-high)");
+  // Background track behind gauge
+  const trackPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  trackPath.setAttribute("d", arcPath(120, 120, 100, 0, 100));
+  trackPath.setAttribute("class", "gauge-arc-track");
+  trackPath.setAttribute("stroke", "var(--surface-2)");
+  trackPath.setAttribute("stroke-width", "14");
+  trackPath.setAttribute("stroke-linecap", "round");
+  trackPath.setAttribute("fill", "none");
+  svg.appendChild(trackPath);
+
+  // Continuous smooth gradient arc
+  const arcGrad = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  arcGrad.setAttribute("d", arcPath(120, 120, 100, 0, 100));
+  arcGrad.setAttribute("class", "gauge-arc-segment");
+  arcGrad.setAttribute("stroke", "url(#gauge-gradient)");
+  arcGrad.setAttribute("stroke-width", "14");
+  arcGrad.setAttribute("stroke-linecap", "round");
+  arcGrad.setAttribute("fill", "none");
+  svg.appendChild(arcGrad);
 
   // Needle: line from center (120, 120) pointing up
   const needleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -82,9 +110,6 @@ export function renderGauge(assessmentData) {
   for (const [k, v] of Object.entries(textProps)) tick100.setAttribute(k, v);
   tick100.textContent = "100";
 
-  svg.appendChild(arcLow);
-  svg.appendChild(arcMid);
-  svg.appendChild(arcHigh);
   svg.appendChild(needleGroup);
   svg.appendChild(tick0);
   svg.appendChild(tick100);

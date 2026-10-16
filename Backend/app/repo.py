@@ -26,12 +26,22 @@ def reset_mock_store() -> None:
 
 
 def seed_mock_store_from_fixtures() -> None:
-    """Populates in-memory store with deterministic seed fixtures from dataset.json."""
+    """Populates in-memory store with real installed browser extensions, or fallback fixtures."""
     import json
     from pathlib import Path
 
     if _MOCK_STORE["extensions"]:
         return
+
+    # 1. Attempt to scan real installed extensions from Chromium browsers on the system
+    try:
+        from Backend.app.services.browser_scanner import populate_installed_extensions_into_store
+
+        count = populate_installed_extensions_into_store(_MOCK_STORE)
+        if count > 0:
+            return
+    except Exception as exc:
+        logger.warning(f"Error scanning installed browser extensions: {exc}")
 
     dataset_path = Path(__file__).resolve().parents[2] / "dev" / "mock-api" / "fixtures" / "dataset.json"
     if not dataset_path.exists():

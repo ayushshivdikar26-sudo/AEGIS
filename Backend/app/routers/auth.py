@@ -78,9 +78,15 @@ async def login(request: Request, response: Response, body: AuthLoginRequest) ->
 
     # 2. Local / Mock Mode Fallback for Testing
     if settings.ENVIRONMENT != "production":
-        mock_user_id = "00000000-0000-0000-0000-000000000002"
+        import hashlib
+        if body.email.strip().lower() == "test@example.com":
+            mock_user_id = "00000000-0000-0000-0000-000000000002"
+        else:
+            h = hashlib.sha256(body.email.strip().lower().encode("utf-8")).hexdigest()
+            mock_user_id = f"{h[:8]}-{h[8:12]}-4{h[13:16]}-a{h[17:20]}-{h[20:32]}"
         mock_access = f"mock-user-token-{mock_user_id}"
-        set_auth_cookies(response, mock_access, "mock-refresh-token")
+        mock_refresh = f"mock-refresh-token-{mock_user_id}"
+        set_auth_cookies(response, mock_access, mock_refresh)
         return AuthMessageResponse(message="Login successful.")
 
     raise UnauthorizedError("Invalid email or password.")
@@ -110,9 +116,9 @@ async def refresh_session(request: Request, response: Response) -> AuthMessageRe
         except Exception as exc:
             logger.warning(f"Error refreshing session: {exc}")
 
-    if settings.ENVIRONMENT != "production" and refresh_token == "mock-refresh-token":
-        mock_user_id = "00000000-0000-0000-0000-000000000002"
-        set_auth_cookies(response, f"mock-user-token-{mock_user_id}", "mock-refresh-token")
+    if settings.ENVIRONMENT != "production" and refresh_token and refresh_token.startswith("mock-refresh-token"):
+        mock_user_id = refresh_token.replace("mock-refresh-token-", "") if "-" in refresh_token[18:] else "00000000-0000-0000-0000-000000000002"
+        set_auth_cookies(response, f"mock-user-token-{mock_user_id}", refresh_token)
         return AuthMessageResponse(message="Session refreshed successfully.")
 
     raise UnauthorizedError("Could not refresh session.")

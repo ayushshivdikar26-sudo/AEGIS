@@ -235,9 +235,15 @@ async function init() {
     const exts = data.extensions || [];
     store.setState({ extensions: exts, source: data.source });
 
-    if (data.source === "fixture") {
-      const notice = document.getElementById("fixture-notice");
-      if (notice) notice.classList.remove("is-hidden");
+    const notice = document.getElementById("fixture-notice");
+    if (notice) {
+      if (data.source === "fixture") {
+        notice.textContent = "Sample data from dev mock API";
+        notice.classList.remove("is-hidden");
+      } else {
+        notice.textContent = `${exts.length} installed extensions monitored`;
+        notice.classList.remove("is-hidden");
+      }
     }
 
     renderSidebarList(listContainer, store.getState(), { onSelect: selectExtension });

@@ -8,7 +8,7 @@ from typing import Any
 from Backend.core.justification_checker import check, generate_plain_summary
 from Backend.core.models import ParsedManifest
 from Backend.core.risk_scoring import assess_manifest
-from Backend.core.version_comparison import compare
+from Backend.core.version_comparison import assess_creep, compare
 
 
 def snapshot_row_to_parsed_manifest(snap: dict[str, Any]) -> ParsedManifest:
@@ -49,4 +49,10 @@ def compare_snapshot_rows(snap_old: dict[str, Any], snap_new: dict[str, Any]) ->
     manifest_old = snapshot_row_to_parsed_manifest(snap_old)
     manifest_new = snapshot_row_to_parsed_manifest(snap_new)
     comparison = compare(manifest_old, manifest_new)
-    return comparison.model_dump()
+    creep = assess_creep(comparison)
+    data = comparison.model_dump()
+    data["outcome"] = creep.outcome
+    data["summary"] = creep.summary
+    data["limitations"] = creep.limitations
+    data["triggers"] = [t.model_dump() for t in creep.triggers]
+    return data

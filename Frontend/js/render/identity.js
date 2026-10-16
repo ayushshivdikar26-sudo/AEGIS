@@ -16,7 +16,7 @@ export function renderIdentity(extensionData) {
 
   // 96px logo with letter fallback
   let logoElement;
-  if (ext.icon_url && (ext.icon_url.startsWith("https:") || ext.icon_url.startsWith("/"))) {
+  if (ext.icon_url && (ext.icon_url.startsWith("https:") || ext.icon_url.startsWith("/") || ext.icon_url.startsWith("assets/") || ext.icon_url.startsWith("data:"))) {
     const img = h("img", {
       src: ext.icon_url,
       alt: "",

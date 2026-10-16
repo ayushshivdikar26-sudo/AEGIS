@@ -3,6 +3,7 @@ AEGIS Typed Exceptions & Error Handlers (Backend/app/errors.py)
 Guarantees uniform {"error": {"code", "message", "request_id"}} responses with zero trace leakage (PRD Part 2c s7).
 """
 
+from collections.abc import Mapping
 from typing import Any
 
 from fastapi import Request, status
@@ -48,7 +49,7 @@ class RateLimitExceededError(AppError):
 
 
 def format_error_response(
-    code: str, message: str, request_id: str, status_code: int, headers: dict[str, str] | None = None
+    code: str, message: str, request_id: str, status_code: int, headers: Mapping[str, str] | None = None
 ) -> JSONResponse:
     payload = {
         "error": {
