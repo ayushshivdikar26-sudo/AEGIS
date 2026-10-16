@@ -27,8 +27,10 @@ from Backend.app.services.ai import get_ai_capabilities
 from Backend.app.services.assessment import (
     compare_snapshot_rows,
     compute_snapshot_assessment,
+    snapshot_row_to_parsed_manifest,
 )
-from Backend.app.services.justification import enrich_permissions_list
+from Backend.app.services.justification import enrich_permissions_from_manifest
+from Backend.core.justification_checker import alignment_for, check
 
 router = APIRouter(prefix="/api/extensions", tags=["extensions"])
 
@@ -135,20 +137,19 @@ async def get_extension_permissions(
 ) -> PermissionsResponse:
     """Get grouped API, Host, and Optional permissions with justification metadata."""
     user_id = user.id if user else "00000000-0000-0000-0000-000000000001"
-    repo.get_extension(user_id, id)
+    ext = repo.get_extension(user_id, id)
     latest_snap = repo.get_latest_snapshot(user_id, id)
 
     if not latest_snap:
         return PermissionsResponse(api=[], host=[], optional=[])
 
-    api_perms = latest_snap.get("api_permissions", [])
-    host_perms = latest_snap.get("host_permissions", [])
-    opt_api = latest_snap.get("optional_api_permissions", [])
-    opt_host = latest_snap.get("optional_host_permissions", [])
-    all_opt = opt_api + opt_host
+    snap_dict = dict(latest_snap)
+    if not snap_dict.get("description") and ext.get("description"):
+        snap_dict["description"] = ext.get("description")
 
-    enriched = enrich_permissions_list(api_perms, host_perms, all_opt)
-    return PermissionsResponse(**enriched)
+    parsed = snapshot_row_to_parsed_manifest(snap_dict)
+    enriched = enrich_permissions_from_manifest(parsed)
+    return PermissionsResponse(**enriched)  # type: ignore[arg-type]
 
 
 @router.get("/{id}/versions", response_model=VersionsResponse)
@@ -204,7 +205,7 @@ async def get_extension_creep(
 ) -> CreepResponse:
     """Evaluate permission creep across the two most recent versions."""
     user_id = user.id if user else "00000000-0000-0000-0000-000000000001"
-    repo.get_extension(user_id, id)
+    ext = repo.get_extension(user_id, id)
     snaps = repo.list_snapshots(user_id, id)
 
     if len(snaps) < 2:
@@ -231,6 +232,14 @@ async def get_extension_creep(
         for i in (comp_dict["api"]["retained"] + comp_dict["host"]["retained"])
     ]
 
+    snap_new_dict = dict(snap_new)
+    if not snap_new_dict.get("description") and ext.get("description"):
+        snap_new_dict["description"] = ext.get("description")
+    parsed_new = snapshot_row_to_parsed_manifest(snap_new_dict)
+    report_new = check(parsed_new)
+    added_names = [i["name"] for i in added_items]
+    alignment_dict = alignment_for(added_names, report_new)
+
     return CreepResponse(
         available=True,
         outcome=comp_dict["outcome"],
@@ -242,7 +251,7 @@ async def get_extension_creep(
         removed=removed_items,
         retained=retained_items,
         broadened=comp_dict["host"].get("broadened", []),
-        alignment=CreepAlignment(text="Purpose alignment has not been evaluated."),
+        alignment=CreepAlignment(**alignment_dict),
     )
 
 

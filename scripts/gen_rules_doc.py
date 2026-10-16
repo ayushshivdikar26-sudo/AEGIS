@@ -53,21 +53,24 @@ def generate_rules_markdown() -> str:
     lines.append("")
     lines.append("## 2. Host Pattern Scope Tiers")
     lines.append("")
-    lines.append("| Tier | Weight | Risk Label | Description |")
-    lines.append("|---|---|---|---|")
+    lines.append("| Tier | Weight | Risk Label | Description | Narrower Alternative |")
+    lines.append("|---|---|---|---|---|")
     tier_weights = cfg["host_tier_weights"]
     for tier, data in kb.get("host_tiers", {}).items():
         w = tier_weights.get(tier, cfg["default_unknown_weight"])
         lbl = cfg["weight_labels"].get(str(w), "medium")
         desc = data.get("allows", "")
-        lines.append(f"| `{tier}` | {w} | {lbl.upper()} | {desc} |")
+        alt = data.get("narrower_alternative") or "None"
+        lines.append(f"| `{tier}` | {w} | {lbl.upper()} | {desc} | {alt} |")
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 3. WebExtension API Permissions Knowledge Base")
     lines.append("")
-    lines.append("| Permission | Weight | Risk Label | Capabilities Allowed | Legitimate Use | Source | Reviewed |")
-    lines.append("|---|---|---|---|---|---|---|")
+    lines.append(
+        "| Permission | Weight | Risk Label | Capabilities Allowed | Legitimate Use | Narrower Alternative | Source | Reviewed |"
+    )
+    lines.append("|---|---|---|---|---|---|---|---|")
 
     api_perms = kb.get("api_permissions", {})
     # Sort by weight descending, then name ascending
@@ -78,15 +81,89 @@ def generate_rules_markdown() -> str:
         lbl = cfg["weight_labels"].get(str(w), "medium")
         allows = data.get("allows", "").replace("|", "\\|")
         legitimate = data.get("legitimate_use", "").replace("|", "\\|")
+        alt = (data.get("narrower_alternative") or "None").replace("|", "\\|")
         source = data.get("source", "")
         source_link = f"[Docs]({source})" if source else "None"
         reviewed = "Yes" if data.get("reviewed") else "No"
-        lines.append(f"| `{name}` | {w} | {lbl.upper()} | {allows} | {legitimate} | {source_link} | {reviewed} |")
+        lines.append(
+            f"| `{name}` | {w} | {lbl.upper()} | {allows} | {legitimate} | {alt} | {source_link} | {reviewed} |"
+        )
 
     lines.append("")
     lines.append("---")
     lines.append("")
-    lines.append("## 4. Permission Creep Assessment Rules")
+    lines.append("## 4. Purpose Tags Catalogue")
+    lines.append("")
+    lines.append("| Purpose Tag | Label | Typical Permissions | Single Site | Keywords |")
+    lines.append("|---|---|---|---|---|")
+    purposes = kb.get("purposes", {})
+    for p_id, p_data in sorted(purposes.items()):
+        lbl = p_data.get("label", p_id)
+        typical = ", ".join(f"`{p}`" for p in p_data.get("typical_permissions", [])) or "None"
+        single = "Yes" if p_data.get("single_site") else "No"
+        kw_list = ", ".join(p_data.get("keywords", [])[:8])
+        lines.append(f"| `{p_id}` | {lbl} | {typical} | {single} | {kw_list} |")
+
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("## 5. Structural Manifest Evidence Mappings")
+    lines.append("")
+    lines.append("| Manifest Structural Feature | Supported Permissions |")
+    lines.append("|---|---|")
+    struct_evidence = kb.get("structural_evidence", {})
+    for feat, perms in sorted(struct_evidence.items()):
+        perms_str = ", ".join(f"`{p}`" for p in perms)
+        lines.append(f"| `{feat}` | {perms_str} |")
+
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("## 6. Justification Decision Rules")
+    lines.append("")
+    lines.append("### API Permission Rules (Evaluated in strict priority order)")
+    lines.append(
+        "1. **Rule 1 (`R1` - Justified / Common):** Capability has weight 1 (minimal risk, standard capability)."
+    )
+    lines.append(
+        "2. **Rule 2 (`R2` - Justified / Structural):** Manifest contains corroborating structural feature (e.g. `sidePanel` with `side_panel` declared)."
+    )
+    lines.append(
+        "3. **Rule 3 (`R3` - Justified / Stated Purpose):** Extension description matches a recognized purpose tag that typically requires this capability."
+    )
+    lines.append(
+        "4. **Rule 4 (`R4` - Unknown / Insufficient Info):** Description is missing, under 20 characters, or contains no recognizable purpose keywords. Rule 4 strictly prevents excessive classification without sufficient context."
+    )
+    lines.append(
+        "5. **Rule 5 (`R5` - Potentially Excessive / Over-privileged):** Recognized purpose matches, but capability has high weight (4 or 5) and a documented narrower alternative exists."
+    )
+    lines.append(
+        "6. **Rule 6 (`R6` - Needs Review / Unknown):** Weight >= 3 flagged as `needs_review`; lower weights default to `unknown`."
+    )
+    lines.append("")
+    lines.append("### Host Permission Rules (Evaluated in strict priority order)")
+    lines.append(
+        "1. **Rule H1 (`H1` - Justified / Keyword):** Requested domain is explicitly named in the extension description."
+    )
+    lines.append(
+        "2. **Rule 1 (`R1` - Justified / Single Host):** Pattern is scoped to a single host (`single_host` tier)."
+    )
+    lines.append(
+        "3. **Rule 4 (`R4` - Unknown / Insufficient Info):** Extension description is missing or under 20 characters."
+    )
+    lines.append(
+        "4. **Rule H2 (`H2` - Potentially Excessive / Single-Site Mismatch):** Extension declared a single-site purpose (e.g. GitHub/YouTube enhancer) but requested broad `all_sites` access."
+    )
+    lines.append(
+        "5. **Rule H3 (`H3` - Potentially Excessive / Broad Host Access):** Broad host pattern (`all_sites` or broad wildcard) requested when narrower host scoping is available."
+    )
+    lines.append(
+        "6. **Rule 6 (`R6` - Needs Review / Unknown):** Unmatched broad pattern flagged as `needs_review` if weight >= 3, else `unknown`."
+    )
+    lines.append("")
+    lines.append("---")
+    lines.append("")
+    lines.append("## 7. Permission Creep Assessment Rules")
     lines.append("")
     lines.append(f"- **Delta Review Threshold:** {cfg['creep']['delta_review']} points")
     lines.append(f"- **Delta Significant Threshold:** {cfg['creep']['delta_significant']} points")
@@ -104,6 +181,11 @@ def generate_rules_markdown() -> str:
     lines.append("   - Any unrecognized capability added.")
     lines.append("3. **No significant permission creep detected:**")
     lines.append("   - All other changes (removals, or low-weight additions with delta < 5).")
+    lines.append("")
+    lines.append("### Purpose Alignment")
+    lines.append("- **Consistent:** All added capabilities align with declared purpose and structure.")
+    lines.append("- **Inconsistent:** One or more added capabilities exceed capabilities explained by stated purpose.")
+    lines.append("- **Unclear:** Purpose alignment cannot be conclusively established without manual review.")
     lines.append("")
     return "\n".join(lines) + "\n"
 

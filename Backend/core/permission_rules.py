@@ -49,6 +49,8 @@ class PermissionKnowledgeBase:
         self.schema_version: int = int(raw_kb.get("schema_version", 1))
         self.api_permissions: dict[str, dict[str, Any]] = raw_kb["api_permissions"]
         self.host_tiers: dict[str, dict[str, Any]] = raw_kb["host_tiers"]
+        self.purposes: dict[str, dict[str, Any]] = raw_kb.get("purposes", {})
+        self.structural_evidence: dict[str, list[str]] = raw_kb.get("structural_evidence", {})
 
         # Validate scoring config essentials
         self.formula_version: str = str(raw_cfg.get("formula_version", "1"))
@@ -93,6 +95,7 @@ class PermissionKnowledgeBase:
                 known=True,
                 tier=None,
                 reviewed=bool(entry.get("reviewed", False)),
+                narrower_alternative=entry.get("narrower_alternative"),
             )
 
         # Unknown permission fallback
@@ -107,6 +110,7 @@ class PermissionKnowledgeBase:
             known=False,
             tier=None,
             reviewed=False,
+            narrower_alternative=None,
         )
 
     def info_for_host(self, pattern: str, *, kind: str = "host") -> PermissionInfo:
@@ -125,6 +129,7 @@ class PermissionKnowledgeBase:
                 known=False,
                 tier=None,
                 reviewed=False,
+                narrower_alternative=None,
             )
 
         tier = scope_tier(parsed)
@@ -150,7 +155,24 @@ class PermissionKnowledgeBase:
             known=True,
             tier=tier,
             reviewed=bool(tier_data.get("reviewed", True)),
+            narrower_alternative=tier_data.get("narrower_alternative"),
         )
+
+    def get_purposes(self) -> dict[str, dict[str, Any]]:
+        """Returns recognized purpose tags and their keyword/permission mappings."""
+        return self.purposes
+
+    def get_structural_evidence(self) -> dict[str, list[str]]:
+        """Returns mapping from manifest structural keys to permissions they justify."""
+        return self.structural_evidence
+
+    def get_narrower_alternative(self, name: str) -> str | None:
+        """Returns documented narrower alternative for an API permission or host tier."""
+        if name in self.api_permissions:
+            return self.api_permissions[name].get("narrower_alternative")
+        if name in self.host_tiers:
+            return self.host_tiers[name].get("narrower_alternative")
+        return None
 
 
 # Global default knowledge base instance

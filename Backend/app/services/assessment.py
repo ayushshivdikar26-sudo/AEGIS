@@ -5,6 +5,7 @@ Transforms stored database snapshot rows into core models and computes determini
 
 from typing import Any
 
+from Backend.core.justification_checker import check, generate_plain_summary
 from Backend.core.models import ParsedManifest
 from Backend.core.risk_scoring import assess_manifest
 from Backend.core.version_comparison import compare
@@ -30,10 +31,17 @@ def snapshot_row_to_parsed_manifest(snap: dict[str, Any]) -> ParsedManifest:
 
 
 def compute_snapshot_assessment(snap: dict[str, Any]) -> dict[str, Any]:
-    """Computes pure, deterministic risk assessment for a snapshot row."""
+    """Computes pure, deterministic risk assessment and justification metrics for a snapshot row."""
     manifest = snapshot_row_to_parsed_manifest(snap)
     assessment = assess_manifest(manifest)
-    return assessment.model_dump()
+    report = check(manifest, assessment)
+    plain_summary = generate_plain_summary(manifest, report, assessment)
+
+    data = assessment.model_dump()
+    data["excess_score"] = report.excess_score
+    data["evidence_coverage"] = report.evidence_coverage
+    data["plain_summary"] = plain_summary
+    return data
 
 
 def compare_snapshot_rows(snap_old: dict[str, Any], snap_new: dict[str, Any]) -> dict[str, Any]:

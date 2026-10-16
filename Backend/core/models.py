@@ -88,6 +88,7 @@ class PermissionInfo(BaseModel):
     known: bool = True
     tier: ScopeTier | None = None
     reviewed: bool = True
+    narrower_alternative: str | None = None
 
 
 class CalculationStep(BaseModel):
@@ -223,3 +224,55 @@ class CreepAssessment(BaseModel):
     score_from: int | None = None
     score_to: int | None = None
     limitations: list[str] = Field(default_factory=list)
+
+
+class EvidenceItem(BaseModel):
+    """Structured evidence element supporting a justification decision (FR-E1)."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    type: str  # "structural" | "keyword" | "common" | "none"
+    text: str
+
+
+class PurposeMatch(BaseModel):
+    """Recognized purpose tag and the triggering keyword/phrase."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    tag: str
+    label: str
+    matched_phrase: str
+
+
+class JustifiedPermission(BaseModel):
+    """Evaluated permission with complete rule provenance and explainability."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    name: str
+    kind: str  # "api" | "host" | "optional_api" | "optional_host"
+    weight: int
+    risk_label: str
+    status: str  # "justified" | "needs_review" | "potentially_excessive" | "unknown"
+    reason: str
+    rule_id: str  # "R1".."R6" or "H1".."H3"
+    evidence: list[EvidenceItem] = Field(default_factory=list)
+    allows: str
+    legitimate_use: str
+    source_url: str | None = None
+    reviewed: bool = True
+    narrower_alternative: str | None = None
+
+
+class JustificationReport(BaseModel):
+    """Complete justification evaluation across API, Host, and Optional sets."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    api: list[JustifiedPermission] = Field(default_factory=list)
+    host: list[JustifiedPermission] = Field(default_factory=list)
+    optional: list[JustifiedPermission] = Field(default_factory=list)
+    purposes: list[PurposeMatch] = Field(default_factory=list)
+    excess_score: float | None = None
+    evidence_coverage: float

@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "knowledge_version": "2026.10.1",
   "api_permissions": {
     "debugger": {
@@ -7,7 +7,8 @@
       "allows": "Attach the browser debugger to tabs, intercept network traffic, and manipulate code execution.",
       "legitimate_use": "Developer tools, automated testing, or in-browser code debugging extensions.",
       "source": "https://developer.chrome.com/docs/extensions/reference/api/debugger",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "scripting or devtools panels"
     },
     "nativeMessaging": {
       "weight": 5,
@@ -21,42 +22,48 @@
       "allows": "Configure browser proxy settings and redirect web traffic through custom intermediary servers.",
       "legitimate_use": "VPN services, privacy networks, or corporate proxy management utilities.",
       "source": "https://developer.chrome.com/docs/extensions/reference/api/proxy",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "declarativeNetRequest"
     },
     "management": {
       "weight": 5,
       "allows": "Install, uninstall, enable, disable, and inspect other browser extensions and web apps.",
       "legitimate_use": "Extension managers, enterprise administration suites, or developer toolkits.",
       "source": "https://developer.chrome.com/docs/extensions/reference/api/management",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "runtime API"
     },
     "webRequestBlocking": {
       "weight": 5,
       "allows": "Block, modify, or inject data into web requests in real time before they complete.",
       "legitimate_use": "Ad blockers, tracker blockers, or advanced web security filters.",
       "source": "https://developer.chrome.com/docs/extensions/reference/api/webRequest",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "declarativeNetRequest"
     },
     "history": {
       "weight": 4,
       "allows": "Read and delete your browsing history and visited web page records.",
       "legitimate_use": "History search tools, productivity dashboards, or privacy history clean-up utilities.",
       "source": "https://developer.chrome.com/docs/extensions/reference/api/history",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "sessions or activeTab"
     },
     "cookies": {
       "weight": 4,
       "allows": "Read, change, and delete website cookies, including login session identifiers.",
       "legitimate_use": "Session switchers, developer cookie inspectors, or privacy tracking controllers.",
       "source": "https://developer.chrome.com/docs/extensions/reference/api/cookies",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "activeTab or storage"
     },
     "tabs": {
       "weight": 4,
       "allows": "Access sensitive tab details such as URLs, titles, and favicon URLs across all open tabs.",
       "legitimate_use": "Tab managers, bookmarking tools, or window organization assistants.",
       "source": "https://developer.chrome.com/docs/extensions/reference/api/tabs",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "activeTab"
     },
     "webRequest": {
       "weight": 4,
@@ -415,7 +422,8 @@
       "allows": "Read and change all data on every website you visit.",
       "legitimate_use": "Ad blockers, comprehensive password managers, or web-wide dark mode enhancers.",
       "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
-      "reviewed": true
+      "reviewed": true,
+      "narrower_alternative": "specific site match patterns or activeTab"
     },
     "file_access": {
       "weight": 4,
@@ -452,5 +460,365 @@
       "source": "https://developer.chrome.com/docs/extensions/develop/concepts/match-patterns",
       "reviewed": true
     }
+  },
+  "purposes": {
+    "ad_blocking": {
+      "label": "Ad & Tracker Blocking",
+      "single_site": false,
+      "keywords": [
+        "ad blocker",
+        "adblock",
+        "ad-block",
+        "block ads",
+        "blocking ads",
+        "banner",
+        "tracker",
+        "tracking",
+        "telemetry",
+        "privacy filter"
+      ],
+      "typical_permissions": [
+        "webRequest",
+        "webRequestBlocking",
+        "declarativeNetRequest",
+        "declarativeNetRequestFeedback",
+        "storage",
+        "unlimitedStorage"
+      ]
+    },
+    "tab_management": {
+      "label": "Tab & Session Management",
+      "single_site": false,
+      "keywords": [
+        "tab manager",
+        "manage tabs",
+        "tab organizer",
+        "tabs organizer",
+        "suspend tabs",
+        "tab group",
+        "close tabs",
+        "save tabs",
+        "session manager",
+        "open tabs",
+        "tab switcher",
+        "browser tabs",
+        "group tabs",
+        "open browser tabs",
+        "tabs"
+      ],
+      "typical_permissions": [
+        "tabs",
+        "tabGroups",
+        "storage",
+        "sessions",
+        "contextMenus"
+      ]
+    },
+    "password_management": {
+      "label": "Password & Identity Management",
+      "single_site": false,
+      "keywords": [
+        "password manager",
+        "password",
+        "passwords",
+        "credentials",
+        "autofill",
+        "vault",
+        "logins",
+        "form filler",
+        "2fa",
+        "authenticator",
+        "totp"
+      ],
+      "typical_permissions": [
+        "storage",
+        "nativeMessaging",
+        "clipboardWrite",
+        "activeTab",
+        "unlimitedStorage"
+      ]
+    },
+    "note_taking": {
+      "label": "Notes & Document Drafting",
+      "single_site": false,
+      "keywords": [
+        "note",
+        "notes",
+        "notebook",
+        "memo",
+        "scratchpad",
+        "journal",
+        "todo",
+        "to-do",
+        "task manager",
+        "sticky notes"
+      ],
+      "typical_permissions": [
+        "storage",
+        "unlimitedStorage",
+        "sidePanel",
+        "clipboardRead",
+        "clipboardWrite"
+      ]
+    },
+    "developer_tools": {
+      "label": "Developer Tools & API Debugging",
+      "single_site": false,
+      "keywords": [
+        "developer tools",
+        "devtools",
+        "inspect",
+        "debugger",
+        "debugging",
+        "dom inspector",
+        "network monitor",
+        "api tester",
+        "console",
+        "rest client"
+      ],
+      "typical_permissions": [
+        "debugger",
+        "webRequest",
+        "storage",
+        "declarativeNetRequest",
+        "webNavigation"
+      ]
+    },
+    "web_clipper": {
+      "label": "Web Clipping & Bookmarking",
+      "single_site": false,
+      "keywords": [
+        "clipper",
+        "clip",
+        "web clipper",
+        "screenshot",
+        "screen capture",
+        "bookmark",
+        "save page",
+        "read later",
+        "pocket",
+        "archive"
+      ],
+      "typical_permissions": [
+        "activeTab",
+        "storage",
+        "contextMenus",
+        "tabs",
+        "downloads"
+      ]
+    },
+    "shopping_coupons": {
+      "label": "Shopping & Price Tracking",
+      "single_site": false,
+      "keywords": [
+        "coupon",
+        "coupons",
+        "cashback",
+        "deals",
+        "discount",
+        "price tracker",
+        "price comparison",
+        "shopping",
+        "promo code"
+      ],
+      "typical_permissions": [
+        "storage",
+        "alarms",
+        "notifications"
+      ]
+    },
+    "translation": {
+      "label": "Translation & Language Learning",
+      "single_site": false,
+      "keywords": [
+        "translate",
+        "translation",
+        "translator",
+        "dictionary",
+        "language",
+        "vocabulary",
+        "definition",
+        "pronunciation"
+      ],
+      "typical_permissions": [
+        "activeTab",
+        "contextMenus",
+        "storage",
+        "tts"
+      ]
+    },
+    "dark_mode": {
+      "label": "Dark Mode & Visual Themes",
+      "single_site": false,
+      "keywords": [
+        "dark mode",
+        "night mode",
+        "dark theme",
+        "invert colors",
+        "screen shader",
+        "dimmer",
+        "eye protection"
+      ],
+      "typical_permissions": [
+        "storage",
+        "activeTab"
+      ]
+    },
+    "accessibility": {
+      "label": "Accessibility & Reading Enhancements",
+      "single_site": false,
+      "keywords": [
+        "screen reader",
+        "text to speech",
+        "high contrast",
+        "font size",
+        "accessibility",
+        "dyslexia",
+        "zoom",
+        "read aloud"
+      ],
+      "typical_permissions": [
+        "tts",
+        "fontSettings",
+        "storage",
+        "activeTab"
+      ]
+    },
+    "download_manager": {
+      "label": "Download Management",
+      "single_site": false,
+      "keywords": [
+        "download manager",
+        "downloader",
+        "save files",
+        "download video",
+        "bulk download",
+        "download accelerator"
+      ],
+      "typical_permissions": [
+        "downloads",
+        "downloads.shelf",
+        "storage"
+      ]
+    },
+    "proxy_vpn": {
+      "label": "VPN & Proxy Networking",
+      "single_site": false,
+      "keywords": [
+        "vpn",
+        "proxy",
+        "unblock",
+        "private network",
+        "tunnel",
+        "ip switcher",
+        "anonymizer"
+      ],
+      "typical_permissions": [
+        "proxy",
+        "storage",
+        "webRequest",
+        "privacy"
+      ]
+    },
+    "social_media": {
+      "label": "Social Media & Community Enhancements",
+      "single_site": false,
+      "keywords": [
+        "social media",
+        "twitter",
+        "x.com",
+        "reddit",
+        "facebook",
+        "linkedin",
+        "instagram",
+        "mastodon",
+        "threads"
+      ],
+      "typical_permissions": [
+        "storage",
+        "notifications",
+        "activeTab"
+      ]
+    },
+    "automation": {
+      "label": "Browser Automation & Scripting",
+      "single_site": false,
+      "keywords": [
+        "automation",
+        "macro",
+        "autoclicker",
+        "form auto",
+        "workflow",
+        "script runner",
+        "userscript"
+      ],
+      "typical_permissions": [
+        "scripting",
+        "activeTab",
+        "storage"
+      ]
+    },
+    "privacy_cleaner": {
+      "label": "Privacy & History Cleaning",
+      "single_site": false,
+      "keywords": [
+        "history cleaner",
+        "clear history",
+        "browsing history",
+        "cache cleaner",
+        "privacy cleaner",
+        "clean cookies",
+        "cookie cleaner"
+      ],
+      "typical_permissions": [
+        "browsingData",
+        "history",
+        "cookies"
+      ]
+    },
+    "single_site_enhancer": {
+      "label": "Single-Site Specific Enhancer",
+      "single_site": true,
+      "keywords": [
+        "for github",
+        "for youtube",
+        "for reddit",
+        "for wikipedia",
+        "for notion",
+        "for trello",
+        "github assistant",
+        "youtube enhancer"
+      ],
+      "typical_permissions": [
+        "storage",
+        "activeTab"
+      ]
+    }
+  },
+  "structural_evidence": {
+    "side_panel": [
+      "sidePanel"
+    ],
+    "sidePanel": [
+      "sidePanel"
+    ],
+    "devtools_page": [
+      "debugger"
+    ],
+    "declarative_net_request": [
+      "declarativeNetRequest",
+      "declarativeNetRequestFeedback",
+      "declarativeNetRequestWithHostAccess"
+    ],
+    "commands": [
+      "activeTab"
+    ],
+    "omnibox": [
+      "omnibox"
+    ],
+    "storage": [
+      "storage",
+      "unlimitedStorage"
+    ]
   }
 }

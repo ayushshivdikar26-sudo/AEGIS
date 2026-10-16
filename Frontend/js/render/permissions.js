@@ -46,15 +46,20 @@ function renderPermissionGroup(title, items, groupKey) {
       ? perm.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
       : "Unknown";
 
+    const nameStatusChildren = [
+      h("span", { className: "perm-name", dir: "auto" }, perm.name),
+      h("span", { className: "perm-status" }, statusText),
+    ];
+    if (perm.rule_id) {
+      nameStatusChildren.push(
+        h("span", { className: "chip chip-rule" }, perm.rule_id)
+      );
+    }
+
     const summary = h(
       "div",
       { className: "perm-row-summary" },
-      h(
-        "div",
-        { className: "perm-name-status" },
-        h("span", { className: "perm-name", dir: "auto" }, perm.name),
-        h("span", { className: "perm-status" }, statusText)
-      ),
+      h("div", { className: "perm-name-status" }, ...nameStatusChildren),
       h("span", { className: `chip chip-${perm.risk_label || "low"}` }, riskWord)
     );
 
@@ -69,21 +74,74 @@ function renderPermissionGroup(title, items, groupKey) {
       h("div", null, perm.legitimate_use || "General extension functionality.")
     );
 
-    // AEGIS Assessment
-    if (perm.assessment || (perm.evidence && perm.evidence.length > 0)) {
-      detailsInner.appendChild(
-        h("div", { className: "perm-block-label" }, "AEGIS Assessment")
+    // How this was decided (FR-E1)
+    const decisionBlock = h("div", {
+      className: "perm-decision-block",
+      style: {
+        "margin-top": "var(--s-2)",
+        "padding-top": "var(--s-2)",
+        "border-top": "1px solid var(--border)",
+      },
+    });
+    decisionBlock.appendChild(
+      h("div", { className: "perm-block-label" }, "How this was decided")
+    );
+
+    const ruleReasonRow = h("div", {
+      style: {
+        "display": "flex",
+        "align-items": "baseline",
+        "gap": "var(--s-2)",
+        "margin-bottom": "var(--s-1)",
+      },
+    });
+    if (perm.rule_id) {
+      ruleReasonRow.appendChild(
+        h("span", { className: "chip chip-rule" }, `Rule ${perm.rule_id}`)
       );
-      if (perm.assessment) {
-        detailsInner.appendChild(h("div", null, perm.assessment));
+    }
+    const explanationText = perm.reason || perm.assessment || "";
+    if (explanationText) {
+      ruleReasonRow.appendChild(
+        h("span", { style: { "font-size": "var(--text-xs)", "color": "var(--text)" } }, explanationText)
+      );
+    }
+    if (perm.rule_id || explanationText) {
+      decisionBlock.appendChild(ruleReasonRow);
+    }
+
+    if (perm.evidence && perm.evidence.length > 0) {
+      const evList = h("ul", {
+        style: {
+          "padding-left": "var(--s-4)",
+          "margin-top": "var(--s-1)",
+          "font-size": "var(--text-xs)",
+          "color": "var(--text-muted)",
+        },
+      });
+      for (const ev of perm.evidence) {
+        evList.appendChild(h("li", null, ev));
       }
-      if (perm.evidence && perm.evidence.length > 0) {
-        const evList = h("ul", { style: { "padding-left": "var(--s-4)", "margin-top": "var(--s-1)" } });
-        for (const ev of perm.evidence) {
-          evList.appendChild(h("li", null, ev));
-        }
-        detailsInner.appendChild(evList);
-      }
+      decisionBlock.appendChild(evList);
+    }
+    detailsInner.appendChild(decisionBlock);
+
+    // Narrower Alternative
+    if (perm.narrower_alternative) {
+      detailsInner.appendChild(
+        h(
+          "div",
+          {
+            style: {
+              "margin-top": "var(--s-2)",
+              "font-size": "var(--text-xs)",
+              "color": "var(--accent-text)",
+            },
+          },
+          h("span", { style: { "font-weight": "600" } }, "Narrower alternative: "),
+          h("span", { className: "mono" }, perm.narrower_alternative)
+        )
+      );
     }
 
     // Source link & Review flag

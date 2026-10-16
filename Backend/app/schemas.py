@@ -95,6 +95,9 @@ class PermissionItem(StrictBaseModel):
     source_url: str | None = None
     reviewed: bool = True
     evidence: list[str] = Field(default_factory=list)
+    rule_id: str | None = None
+    reason: str | None = None
+    assessment: str | None = None
 
 
 class PermissionsResponse(StrictBaseModel):
@@ -138,6 +141,7 @@ class ComparisonResponse(StrictBaseModel):
 # 6. Permission Creep
 # ============================================================================
 class CreepAlignment(StrictBaseModel):
+    status: str | None = None
     text: str
 
 

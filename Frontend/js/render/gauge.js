@@ -150,6 +150,51 @@ export function renderGauge(assessmentData) {
     );
   }
 
+  // Excess Score & Evidence Coverage (FR-E1, PRD s4.5)
+  if (assess.excess_score !== undefined || assess.evidence_coverage !== undefined) {
+    const excessBox = h("div", {
+      className: "excess-score-box",
+      style: {
+        "display": "flex",
+        "justify-content": "space-between",
+        "align-items": "center",
+        "padding": "var(--s-2) var(--s-3)",
+        "background-color": "var(--surface-2)",
+        "border-radius": "var(--radius)",
+        "font-size": "var(--text-xs)",
+        "color": "var(--text-muted)",
+        "margin-top": "var(--s-2)",
+      },
+    });
+
+    const excessVal =
+      assess.excess_score !== null && assess.excess_score !== undefined
+        ? `${assess.excess_score} / 100`
+        : "Not enough evidence to estimate";
+
+    excessBox.appendChild(
+      h(
+        "div",
+        null,
+        h("span", { style: { "font-weight": "600", "color": "var(--text)" } }, "Excess score: "),
+        h("span", { className: "mono" }, excessVal)
+      )
+    );
+
+    if (assess.evidence_coverage !== undefined && assess.evidence_coverage !== null) {
+      excessBox.appendChild(
+        h(
+          "div",
+          null,
+          h("span", { style: { "font-weight": "600", "color": "var(--text)" } }, "Evidence coverage: "),
+          h("span", { className: "mono" }, `${Math.round(assess.evidence_coverage * 100)}%`)
+        )
+      );
+    }
+
+    panel.appendChild(excessBox);
+  }
+
   // Top 3 Breakdown Contributors
   if (assess.breakdown && assess.breakdown.length > 0) {
     const top3 = assess.breakdown.slice(0, 3);

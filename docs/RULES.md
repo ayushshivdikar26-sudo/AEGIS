@@ -22,83 +22,140 @@
 
 ## 2. Host Pattern Scope Tiers
 
-| Tier | Weight | Risk Label | Description |
-|---|---|---|---|
-| `all_sites` | 5 | CRITICAL | Read and change all data on every website you visit. |
-| `file_access` | 4 | HIGH | Access and read local files stored directly on your computer filesystem. |
-| `suffix_wide` | 4 | HIGH | Access all websites under an entire top-level domain or public suffix (such as all .com or .co.uk sites). |
-| `all_hosts_partial_path` | 4 | HIGH | Access specific web page paths across every website on the Internet. |
-| `domain_wide` | 2 | LOW | Access a specific domain and all of its subdomains. |
-| `single_host` | 1 | LOW | Access one specific website hostname only. |
+| Tier | Weight | Risk Label | Description | Narrower Alternative |
+|---|---|---|---|---|
+| `all_sites` | 5 | CRITICAL | Read and change all data on every website you visit. | specific site match patterns or activeTab |
+| `file_access` | 4 | HIGH | Access and read local files stored directly on your computer filesystem. | None |
+| `suffix_wide` | 4 | HIGH | Access all websites under an entire top-level domain or public suffix (such as all .com or .co.uk sites). | None |
+| `all_hosts_partial_path` | 4 | HIGH | Access specific web page paths across every website on the Internet. | None |
+| `domain_wide` | 2 | LOW | Access a specific domain and all of its subdomains. | None |
+| `single_host` | 1 | LOW | Access one specific website hostname only. | None |
 
 ---
 
 ## 3. WebExtension API Permissions Knowledge Base
 
-| Permission | Weight | Risk Label | Capabilities Allowed | Legitimate Use | Source | Reviewed |
-|---|---|---|---|---|---|---|
-| `debugger` | 5 | CRITICAL | Attach the browser debugger to tabs, intercept network traffic, and manipulate code execution. | Developer tools, automated testing, or in-browser code debugging extensions. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/debugger) | Yes |
-| `management` | 5 | CRITICAL | Install, uninstall, enable, disable, and inspect other browser extensions and web apps. | Extension managers, enterprise administration suites, or developer toolkits. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/management) | Yes |
-| `nativeMessaging` | 5 | CRITICAL | Exchange messages with native applications installed on your computer outside the browser. | Hardware integration, password manager desktop app sync, or security key drivers. | [Docs](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) | Yes |
-| `proxy` | 5 | CRITICAL | Configure browser proxy settings and redirect web traffic through custom intermediary servers. | VPN services, privacy networks, or corporate proxy management utilities. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/proxy) | Yes |
-| `webRequestBlocking` | 5 | CRITICAL | Block, modify, or inject data into web requests in real time before they complete. | Ad blockers, tracker blockers, or advanced web security filters. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webRequest) | Yes |
-| `clipboardRead` | 4 | HIGH | Read all text and image data currently stored on your computer clipboard. | Clipboard managers, translation shortcuts, or note-taking assistants. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/clipboardRead) | Yes |
-| `cookies` | 4 | HIGH | Read, change, and delete website cookies, including login session identifiers. | Session switchers, developer cookie inspectors, or privacy tracking controllers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/cookies) | Yes |
-| `declarativeNetRequestWithHostAccess` | 4 | HIGH | Block or redirect network requests on specific websites based on rules matching host access. | Targeted site filtering, developer mock servers, or site-specific blockers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest) | Yes |
-| `desktopCapture` | 4 | HIGH | Capture content from your entire desktop screen, windows, or applications. | Video conferencing screen sharing, full-desktop recorders, or broadcast streaming tools. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/desktopCapture) | Yes |
-| `history` | 4 | HIGH | Read and delete your browsing history and visited web page records. | History search tools, productivity dashboards, or privacy history clean-up utilities. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/history) | Yes |
-| `identity.email` | 4 | HIGH | Read the primary email address of your signed-in browser profile. | Seamless sign-in and user identity synchronization for account-backed extensions. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/identity) | Yes |
-| `pageCapture` | 4 | HIGH | Save any open web page as a complete MHTML archive file. | Offline reading apps, research archive savers, or snapshot tools. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/pageCapture) | Yes |
-| `privacy` | 4 | HIGH | Control browser privacy settings such as autofill, third-party cookies, and webRTC IP leaks. | Privacy hardening suites and security compliance assistants. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/privacy) | Yes |
-| `tabCapture` | 4 | HIGH | Capture video and audio streams directly from active browser tabs. | Screen recorders, presentation streaming tools, or audio transcribers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tabCapture) | Yes |
-| `tabs` | 4 | HIGH | Access sensitive tab details such as URLs, titles, and favicon URLs across all open tabs. | Tab managers, bookmarking tools, or window organization assistants. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tabs) | Yes |
-| `webAuthenticationProxy` | 4 | HIGH | Intercept and proxy WebAuthn hardware token authentication requests. | Enterprise identity bridges or passkey credential synchronization managers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webAuthenticationProxy) | Yes |
-| `webRequest` | 4 | HIGH | Observe and inspect live web traffic and HTTP headers across all websites you browse. | Traffic monitoring, developer network inspection, or web security audit tools. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webRequest) | Yes |
-| `bookmarks` | 3 | MEDIUM | Read, create, edit, and organize all browser bookmarks and bookmark folders. | Bookmark managers, reading lists, or cross-browser bookmark sync tools. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/bookmarks) | Yes |
-| `browsingData` | 3 | MEDIUM | Clear browser cache, cookies, download history, and autofill forms. | Privacy cleanup tools, cache clearers, or automated browsing data purgers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/browsingData) | Yes |
-| `contentSettings` | 3 | MEDIUM | Control website permissions for cookies, JavaScript, camera, microphone, and popups. | Site permission toggles, script blockers, or privacy permission profiles. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/contentSettings) | Yes |
-| `declarativeNetRequestFeedback` | 3 | MEDIUM | Read internal diagnostic information about blocked or modified network requests. | Rule testing, ad blocker debugging, or network filter diagnostic suites. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#method-getMatchedRules) | Yes |
-| `downloads` | 3 | MEDIUM | Initiate, monitor, pause, resume, and cancel browser file downloads. | Download managers, image batch downloaders, or file routing utilities. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/downloads) | Yes |
-| `downloads.open` | 3 | MEDIUM | Open downloaded files directly on your computer through their default system applications. | Automated workflow tools or instant document viewer integrations. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/downloads#method-open) | Yes |
-| `geolocation` | 3 | MEDIUM | Query your physical geographic location coordinates via browser sensors. | Local weather displays, store locator assistants, or region-specific tools. | [Docs](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions#geolocation) | Yes |
-| `identity` | 3 | MEDIUM | Obtain OAuth2 authentication tokens using browser-mediated sign-in flows. | Third-party service authorization for calendar, cloud storage, or social media. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/identity) | Yes |
-| `printerProvider` | 3 | MEDIUM | Expose virtual print destinations to the browser print dialog. | Cloud print integrations, PDF transform providers, or fax gateways. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/printerProvider) | Yes |
-| `printing` | 3 | MEDIUM | Send print jobs directly to printers installed on the local system. | Receipt printers, invoice generators, or automated document printing workflows. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/printing) | Yes |
-| `scripting` | 3 | MEDIUM | Execute JavaScript and inject CSS into web pages where the extension has host access. | Web page annotators, user style engines, or form autofill assistants. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/scripting) | Yes |
-| `sessions` | 3 | MEDIUM | Query and restore recently closed browser tabs and windows. | Session restore assistants, tab recovery managers, or window snapshot utilities. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/sessions) | Yes |
-| `topSites` | 3 | MEDIUM | Read your most frequently visited website shortcuts from the browser new-tab page. | Custom new tab replacements or speed-dial dashboard organizers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/topSites) | Yes |
-| `webNavigation` | 3 | MEDIUM | Observe detailed navigation events, redirects, and frame loading states in real time. | Page load timers, analytics monitors, or automatic navigation helpers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webNavigation) | Yes |
-| `background` | 2 | LOW | Start browser processes early at system boot and keep running after windows close. | Background message syncing, notification listeners, or instant startup. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/background) | Yes |
-| `clipboardWrite` | 2 | LOW | Write text and image data to your computer clipboard. | Copying links, formatted snippets, or generated passwords with one click. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/clipboardWrite) | Yes |
-| `declarativeContent` | 2 | LOW | Take page actions automatically when web pages match specific conditions without running background scripts. | Enabling extension popup buttons only when visiting supported websites. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeContent) | Yes |
-| `declarativeNetRequest` | 2 | LOW | Block or modify network requests declaratively using pre-compiled rules without seeing request content. | Ad blocking and content filtering without access to sensitive request bodies. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest) | Yes |
-| `favicon` | 2 | LOW | Request and display website favicon icons for bookmarked or open pages. | Visual tab switchers, bookmark managers, or speed-dial menus. | [Docs](https://developer.chrome.com/docs/extensions/how-to/ui/favicons) | Yes |
-| `gcm` | 2 | LOW | Send and receive push messages through Google Cloud Messaging. | Receiving real-time updates and notifications from cloud web services. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/gcm) | Yes |
-| `loginState` | 2 | LOW | Read the login status of the managed ChromeOS profile. | Kiosk and enterprise device state verification on ChromeOS. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/loginState) | Yes |
-| `notifications` | 2 | LOW | Display desktop notifications through the operating system notification center. | Alerting users to incoming messages, calendar reminders, or background task completion. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/notifications) | Yes |
-| `offscreen` | 2 | LOW | Create hidden DOM documents in the background to access audio playback, clipboard, or DOM APIs. | Background audio playback, clipboard parsing, or canvas rendering in Manifest V3. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/offscreen) | Yes |
-| `readingList` | 2 | LOW | Read, add, update, and remove items in the browser reading list. | Read-it-later utilities or article collection organizers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/readingList) | Yes |
-| `search` | 2 | LOW | Query the browser default search engine and display results. | Omnibox search shortcuts, quick lookups, or smart search enhancements. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/search) | Yes |
-| `system.cpu` | 2 | LOW | Query system CPU processor architecture, model name, and core usage metadata. | System resource monitors or hardware diagnostic extensions. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/cpu) | Yes |
-| `system.display` | 2 | LOW | Query connected monitor resolutions, work areas, and display arrangements. | Multi-monitor window organizers or layout placement assistants. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/display) | Yes |
-| `system.memory` | 2 | LOW | Query system physical memory capacity and available RAM. | Performance monitoring dashboards or memory saver extensions. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/memory) | Yes |
-| `system.storage` | 2 | LOW | Query attached storage devices, capacities, and monitor device attachment events. | External disk file routers or system diagnostic monitors. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/storage) | Yes |
-| `tabGroups` | 2 | LOW | Create, modify, label, color, and organize tab groups in the browser window. | Tab grouping assistants, workflow categorizers, or project tab organizers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tabGroups) | Yes |
-| `ttsEngine` | 2 | LOW | Implement a custom text-to-speech voice synthesizer engine for the browser. | Custom synthetic voice packages or accessibility speech tools. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/ttsEngine) | Yes |
-| `activeTab` | 1 | LOW | Temporarily access the current active web page only when the user explicitly clicks the extension icon. | User-triggered page actions, full-page screenshots, or one-click clip tools. | [Docs](https://developer.chrome.com/docs/extensions/develop/concepts/activeTab) | Yes |
-| `alarms` | 1 | LOW | Schedule code to run periodically or at specific future times in the background. | Periodic feed polling, reminder triggers, or cache cleanup tasks. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/alarms) | Yes |
-| `contextMenus` | 1 | LOW | Add custom action items to the browser right-click context menu. | Quick actions for selected text, images, or links via the right-click menu. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/contextMenus) | Yes |
-| `fontSettings` | 1 | LOW | Inspect and customize default browser font sizes and font families. | Typography customizers or accessibility font enhancers. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/fontSettings) | Yes |
-| `idle` | 1 | LOW | Detect when the user is idle, locked, or active on the machine. | Scheduling resource-heavy maintenance tasks when the user is away. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/idle) | Yes |
-| `power` | 1 | LOW | Prevent the computer screen or system from sleeping while a task runs. | Presentation view, long video playback, or active kiosk displays. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/power) | Yes |
-| `sidePanel` | 1 | LOW | Render custom user interface in the browser side panel companion window. | Notes, companion dashboards, translators, or document assistants. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/sidePanel) | Yes |
-| `storage` | 1 | LOW | Store extension settings and cached data locally in the browser profile. | Persisting user preferences, local cache, or extension state across restarts. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/storage) | Yes |
-| `tts` | 1 | LOW | Speak text using the browser built-in speech synthesis synthesizer. | Screen reading, audio alerts, or pronunciation guides. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tts) | Yes |
-| `unlimitedStorage` | 1 | LOW | Exceed standard 5 MB storage quota for extension databases and local storage. | Offline data stores, large local caches, or document drafts. | [Docs](https://developer.chrome.com/docs/extensions/reference/api/unlimitedStorage) | Yes |
+| Permission | Weight | Risk Label | Capabilities Allowed | Legitimate Use | Narrower Alternative | Source | Reviewed |
+|---|---|---|---|---|---|---|---|
+| `debugger` | 5 | CRITICAL | Attach the browser debugger to tabs, intercept network traffic, and manipulate code execution. | Developer tools, automated testing, or in-browser code debugging extensions. | scripting or devtools panels | [Docs](https://developer.chrome.com/docs/extensions/reference/api/debugger) | Yes |
+| `management` | 5 | CRITICAL | Install, uninstall, enable, disable, and inspect other browser extensions and web apps. | Extension managers, enterprise administration suites, or developer toolkits. | runtime API | [Docs](https://developer.chrome.com/docs/extensions/reference/api/management) | Yes |
+| `nativeMessaging` | 5 | CRITICAL | Exchange messages with native applications installed on your computer outside the browser. | Hardware integration, password manager desktop app sync, or security key drivers. | None | [Docs](https://developer.chrome.com/docs/extensions/develop/concepts/native-messaging) | Yes |
+| `proxy` | 5 | CRITICAL | Configure browser proxy settings and redirect web traffic through custom intermediary servers. | VPN services, privacy networks, or corporate proxy management utilities. | declarativeNetRequest | [Docs](https://developer.chrome.com/docs/extensions/reference/api/proxy) | Yes |
+| `webRequestBlocking` | 5 | CRITICAL | Block, modify, or inject data into web requests in real time before they complete. | Ad blockers, tracker blockers, or advanced web security filters. | declarativeNetRequest | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webRequest) | Yes |
+| `clipboardRead` | 4 | HIGH | Read all text and image data currently stored on your computer clipboard. | Clipboard managers, translation shortcuts, or note-taking assistants. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/clipboardRead) | Yes |
+| `cookies` | 4 | HIGH | Read, change, and delete website cookies, including login session identifiers. | Session switchers, developer cookie inspectors, or privacy tracking controllers. | activeTab or storage | [Docs](https://developer.chrome.com/docs/extensions/reference/api/cookies) | Yes |
+| `declarativeNetRequestWithHostAccess` | 4 | HIGH | Block or redirect network requests on specific websites based on rules matching host access. | Targeted site filtering, developer mock servers, or site-specific blockers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest) | Yes |
+| `desktopCapture` | 4 | HIGH | Capture content from your entire desktop screen, windows, or applications. | Video conferencing screen sharing, full-desktop recorders, or broadcast streaming tools. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/desktopCapture) | Yes |
+| `history` | 4 | HIGH | Read and delete your browsing history and visited web page records. | History search tools, productivity dashboards, or privacy history clean-up utilities. | sessions or activeTab | [Docs](https://developer.chrome.com/docs/extensions/reference/api/history) | Yes |
+| `identity.email` | 4 | HIGH | Read the primary email address of your signed-in browser profile. | Seamless sign-in and user identity synchronization for account-backed extensions. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/identity) | Yes |
+| `pageCapture` | 4 | HIGH | Save any open web page as a complete MHTML archive file. | Offline reading apps, research archive savers, or snapshot tools. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/pageCapture) | Yes |
+| `privacy` | 4 | HIGH | Control browser privacy settings such as autofill, third-party cookies, and webRTC IP leaks. | Privacy hardening suites and security compliance assistants. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/privacy) | Yes |
+| `tabCapture` | 4 | HIGH | Capture video and audio streams directly from active browser tabs. | Screen recorders, presentation streaming tools, or audio transcribers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tabCapture) | Yes |
+| `tabs` | 4 | HIGH | Access sensitive tab details such as URLs, titles, and favicon URLs across all open tabs. | Tab managers, bookmarking tools, or window organization assistants. | activeTab | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tabs) | Yes |
+| `webAuthenticationProxy` | 4 | HIGH | Intercept and proxy WebAuthn hardware token authentication requests. | Enterprise identity bridges or passkey credential synchronization managers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webAuthenticationProxy) | Yes |
+| `webRequest` | 4 | HIGH | Observe and inspect live web traffic and HTTP headers across all websites you browse. | Traffic monitoring, developer network inspection, or web security audit tools. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webRequest) | Yes |
+| `bookmarks` | 3 | MEDIUM | Read, create, edit, and organize all browser bookmarks and bookmark folders. | Bookmark managers, reading lists, or cross-browser bookmark sync tools. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/bookmarks) | Yes |
+| `browsingData` | 3 | MEDIUM | Clear browser cache, cookies, download history, and autofill forms. | Privacy cleanup tools, cache clearers, or automated browsing data purgers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/browsingData) | Yes |
+| `contentSettings` | 3 | MEDIUM | Control website permissions for cookies, JavaScript, camera, microphone, and popups. | Site permission toggles, script blockers, or privacy permission profiles. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/contentSettings) | Yes |
+| `declarativeNetRequestFeedback` | 3 | MEDIUM | Read internal diagnostic information about blocked or modified network requests. | Rule testing, ad blocker debugging, or network filter diagnostic suites. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest#method-getMatchedRules) | Yes |
+| `downloads` | 3 | MEDIUM | Initiate, monitor, pause, resume, and cancel browser file downloads. | Download managers, image batch downloaders, or file routing utilities. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/downloads) | Yes |
+| `downloads.open` | 3 | MEDIUM | Open downloaded files directly on your computer through their default system applications. | Automated workflow tools or instant document viewer integrations. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/downloads#method-open) | Yes |
+| `geolocation` | 3 | MEDIUM | Query your physical geographic location coordinates via browser sensors. | Local weather displays, store locator assistants, or region-specific tools. | None | [Docs](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/permissions#geolocation) | Yes |
+| `identity` | 3 | MEDIUM | Obtain OAuth2 authentication tokens using browser-mediated sign-in flows. | Third-party service authorization for calendar, cloud storage, or social media. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/identity) | Yes |
+| `printerProvider` | 3 | MEDIUM | Expose virtual print destinations to the browser print dialog. | Cloud print integrations, PDF transform providers, or fax gateways. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/printerProvider) | Yes |
+| `printing` | 3 | MEDIUM | Send print jobs directly to printers installed on the local system. | Receipt printers, invoice generators, or automated document printing workflows. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/printing) | Yes |
+| `scripting` | 3 | MEDIUM | Execute JavaScript and inject CSS into web pages where the extension has host access. | Web page annotators, user style engines, or form autofill assistants. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/scripting) | Yes |
+| `sessions` | 3 | MEDIUM | Query and restore recently closed browser tabs and windows. | Session restore assistants, tab recovery managers, or window snapshot utilities. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/sessions) | Yes |
+| `topSites` | 3 | MEDIUM | Read your most frequently visited website shortcuts from the browser new-tab page. | Custom new tab replacements or speed-dial dashboard organizers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/topSites) | Yes |
+| `webNavigation` | 3 | MEDIUM | Observe detailed navigation events, redirects, and frame loading states in real time. | Page load timers, analytics monitors, or automatic navigation helpers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/webNavigation) | Yes |
+| `background` | 2 | LOW | Start browser processes early at system boot and keep running after windows close. | Background message syncing, notification listeners, or instant startup. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/background) | Yes |
+| `clipboardWrite` | 2 | LOW | Write text and image data to your computer clipboard. | Copying links, formatted snippets, or generated passwords with one click. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/clipboardWrite) | Yes |
+| `declarativeContent` | 2 | LOW | Take page actions automatically when web pages match specific conditions without running background scripts. | Enabling extension popup buttons only when visiting supported websites. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeContent) | Yes |
+| `declarativeNetRequest` | 2 | LOW | Block or modify network requests declaratively using pre-compiled rules without seeing request content. | Ad blocking and content filtering without access to sensitive request bodies. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest) | Yes |
+| `favicon` | 2 | LOW | Request and display website favicon icons for bookmarked or open pages. | Visual tab switchers, bookmark managers, or speed-dial menus. | None | [Docs](https://developer.chrome.com/docs/extensions/how-to/ui/favicons) | Yes |
+| `gcm` | 2 | LOW | Send and receive push messages through Google Cloud Messaging. | Receiving real-time updates and notifications from cloud web services. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/gcm) | Yes |
+| `loginState` | 2 | LOW | Read the login status of the managed ChromeOS profile. | Kiosk and enterprise device state verification on ChromeOS. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/loginState) | Yes |
+| `notifications` | 2 | LOW | Display desktop notifications through the operating system notification center. | Alerting users to incoming messages, calendar reminders, or background task completion. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/notifications) | Yes |
+| `offscreen` | 2 | LOW | Create hidden DOM documents in the background to access audio playback, clipboard, or DOM APIs. | Background audio playback, clipboard parsing, or canvas rendering in Manifest V3. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/offscreen) | Yes |
+| `readingList` | 2 | LOW | Read, add, update, and remove items in the browser reading list. | Read-it-later utilities or article collection organizers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/readingList) | Yes |
+| `search` | 2 | LOW | Query the browser default search engine and display results. | Omnibox search shortcuts, quick lookups, or smart search enhancements. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/search) | Yes |
+| `system.cpu` | 2 | LOW | Query system CPU processor architecture, model name, and core usage metadata. | System resource monitors or hardware diagnostic extensions. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/cpu) | Yes |
+| `system.display` | 2 | LOW | Query connected monitor resolutions, work areas, and display arrangements. | Multi-monitor window organizers or layout placement assistants. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/display) | Yes |
+| `system.memory` | 2 | LOW | Query system physical memory capacity and available RAM. | Performance monitoring dashboards or memory saver extensions. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/memory) | Yes |
+| `system.storage` | 2 | LOW | Query attached storage devices, capacities, and monitor device attachment events. | External disk file routers or system diagnostic monitors. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/system/storage) | Yes |
+| `tabGroups` | 2 | LOW | Create, modify, label, color, and organize tab groups in the browser window. | Tab grouping assistants, workflow categorizers, or project tab organizers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tabGroups) | Yes |
+| `ttsEngine` | 2 | LOW | Implement a custom text-to-speech voice synthesizer engine for the browser. | Custom synthetic voice packages or accessibility speech tools. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/ttsEngine) | Yes |
+| `activeTab` | 1 | LOW | Temporarily access the current active web page only when the user explicitly clicks the extension icon. | User-triggered page actions, full-page screenshots, or one-click clip tools. | None | [Docs](https://developer.chrome.com/docs/extensions/develop/concepts/activeTab) | Yes |
+| `alarms` | 1 | LOW | Schedule code to run periodically or at specific future times in the background. | Periodic feed polling, reminder triggers, or cache cleanup tasks. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/alarms) | Yes |
+| `contextMenus` | 1 | LOW | Add custom action items to the browser right-click context menu. | Quick actions for selected text, images, or links via the right-click menu. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/contextMenus) | Yes |
+| `fontSettings` | 1 | LOW | Inspect and customize default browser font sizes and font families. | Typography customizers or accessibility font enhancers. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/fontSettings) | Yes |
+| `idle` | 1 | LOW | Detect when the user is idle, locked, or active on the machine. | Scheduling resource-heavy maintenance tasks when the user is away. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/idle) | Yes |
+| `power` | 1 | LOW | Prevent the computer screen or system from sleeping while a task runs. | Presentation view, long video playback, or active kiosk displays. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/power) | Yes |
+| `sidePanel` | 1 | LOW | Render custom user interface in the browser side panel companion window. | Notes, companion dashboards, translators, or document assistants. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/sidePanel) | Yes |
+| `storage` | 1 | LOW | Store extension settings and cached data locally in the browser profile. | Persisting user preferences, local cache, or extension state across restarts. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/storage) | Yes |
+| `tts` | 1 | LOW | Speak text using the browser built-in speech synthesis synthesizer. | Screen reading, audio alerts, or pronunciation guides. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/tts) | Yes |
+| `unlimitedStorage` | 1 | LOW | Exceed standard 5 MB storage quota for extension databases and local storage. | Offline data stores, large local caches, or document drafts. | None | [Docs](https://developer.chrome.com/docs/extensions/reference/api/unlimitedStorage) | Yes |
 
 ---
 
-## 4. Permission Creep Assessment Rules
+## 4. Purpose Tags Catalogue
+
+| Purpose Tag | Label | Typical Permissions | Single Site | Keywords |
+|---|---|---|---|---|
+| `accessibility` | Accessibility & Reading Enhancements | `tts`, `fontSettings`, `storage`, `activeTab` | No | screen reader, text to speech, high contrast, font size, accessibility, dyslexia, zoom, read aloud |
+| `ad_blocking` | Ad & Tracker Blocking | `webRequest`, `webRequestBlocking`, `declarativeNetRequest`, `declarativeNetRequestFeedback`, `storage`, `unlimitedStorage` | No | ad blocker, adblock, ad-block, block ads, blocking ads, banner, tracker, tracking |
+| `automation` | Browser Automation & Scripting | `scripting`, `activeTab`, `storage` | No | automation, macro, autoclicker, form auto, workflow, script runner, userscript |
+| `dark_mode` | Dark Mode & Visual Themes | `storage`, `activeTab` | No | dark mode, night mode, dark theme, invert colors, screen shader, dimmer, eye protection |
+| `developer_tools` | Developer Tools & API Debugging | `debugger`, `webRequest`, `storage`, `declarativeNetRequest`, `webNavigation` | No | developer tools, devtools, inspect, debugger, debugging, dom inspector, network monitor, api tester |
+| `download_manager` | Download Management | `downloads`, `downloads.shelf`, `storage` | No | download manager, downloader, save files, download video, bulk download, download accelerator |
+| `note_taking` | Notes & Document Drafting | `storage`, `unlimitedStorage`, `sidePanel`, `clipboardRead`, `clipboardWrite` | No | note, notes, notebook, memo, scratchpad, journal, todo, to-do |
+| `password_management` | Password & Identity Management | `storage`, `nativeMessaging`, `clipboardWrite`, `activeTab`, `unlimitedStorage` | No | password manager, password, passwords, credentials, autofill, vault, logins, form filler |
+| `privacy_cleaner` | Privacy & History Cleaning | `browsingData`, `history`, `cookies` | No | history cleaner, clear history, browsing history, cache cleaner, privacy cleaner, clean cookies, cookie cleaner |
+| `proxy_vpn` | VPN & Proxy Networking | `proxy`, `storage`, `webRequest`, `privacy` | No | vpn, proxy, unblock, private network, tunnel, ip switcher, anonymizer |
+| `shopping_coupons` | Shopping & Price Tracking | `storage`, `alarms`, `notifications` | No | coupon, coupons, cashback, deals, discount, price tracker, price comparison, shopping |
+| `single_site_enhancer` | Single-Site Specific Enhancer | `storage`, `activeTab` | Yes | for github, for youtube, for reddit, for wikipedia, for notion, for trello, github assistant, youtube enhancer |
+| `social_media` | Social Media & Community Enhancements | `storage`, `notifications`, `activeTab` | No | social media, twitter, x.com, reddit, facebook, linkedin, instagram, mastodon |
+| `tab_management` | Tab & Session Management | `tabs`, `tabGroups`, `storage`, `sessions`, `contextMenus` | No | tab manager, manage tabs, tab organizer, tabs organizer, suspend tabs, tab group, close tabs, save tabs |
+| `translation` | Translation & Language Learning | `activeTab`, `contextMenus`, `storage`, `tts` | No | translate, translation, translator, dictionary, language, vocabulary, definition, pronunciation |
+| `web_clipper` | Web Clipping & Bookmarking | `activeTab`, `storage`, `contextMenus`, `tabs`, `downloads` | No | clipper, clip, web clipper, screenshot, screen capture, bookmark, save page, read later |
+
+---
+
+## 5. Structural Manifest Evidence Mappings
+
+| Manifest Structural Feature | Supported Permissions |
+|---|---|
+| `commands` | `activeTab` |
+| `declarative_net_request` | `declarativeNetRequest`, `declarativeNetRequestFeedback`, `declarativeNetRequestWithHostAccess` |
+| `devtools_page` | `debugger` |
+| `omnibox` | `omnibox` |
+| `sidePanel` | `sidePanel` |
+| `side_panel` | `sidePanel` |
+| `storage` | `storage`, `unlimitedStorage` |
+
+---
+
+## 6. Justification Decision Rules
+
+### API Permission Rules (Evaluated in strict priority order)
+1. **Rule 1 (`R1` - Justified / Common):** Capability has weight 1 (minimal risk, standard capability).
+2. **Rule 2 (`R2` - Justified / Structural):** Manifest contains corroborating structural feature (e.g. `sidePanel` with `side_panel` declared).
+3. **Rule 3 (`R3` - Justified / Stated Purpose):** Extension description matches a recognized purpose tag that typically requires this capability.
+4. **Rule 4 (`R4` - Unknown / Insufficient Info):** Description is missing, under 20 characters, or contains no recognizable purpose keywords. Rule 4 strictly prevents excessive classification without sufficient context.
+5. **Rule 5 (`R5` - Potentially Excessive / Over-privileged):** Recognized purpose matches, but capability has high weight (4 or 5) and a documented narrower alternative exists.
+6. **Rule 6 (`R6` - Needs Review / Unknown):** Weight >= 3 flagged as `needs_review`; lower weights default to `unknown`.
+
+### Host Permission Rules (Evaluated in strict priority order)
+1. **Rule H1 (`H1` - Justified / Keyword):** Requested domain is explicitly named in the extension description.
+2. **Rule 1 (`R1` - Justified / Single Host):** Pattern is scoped to a single host (`single_host` tier).
+3. **Rule 4 (`R4` - Unknown / Insufficient Info):** Extension description is missing or under 20 characters.
+4. **Rule H2 (`H2` - Potentially Excessive / Single-Site Mismatch):** Extension declared a single-site purpose (e.g. GitHub/YouTube enhancer) but requested broad `all_sites` access.
+5. **Rule H3 (`H3` - Potentially Excessive / Broad Host Access):** Broad host pattern (`all_sites` or broad wildcard) requested when narrower host scoping is available.
+6. **Rule 6 (`R6` - Needs Review / Unknown):** Unmatched broad pattern flagged as `needs_review` if weight >= 3, else `unknown`.
+
+---
+
+## 7. Permission Creep Assessment Rules
 
 - **Delta Review Threshold:** 5 points
 - **Delta Significant Threshold:** 15 points
@@ -116,4 +173,9 @@
    - Any unrecognized capability added.
 3. **No significant permission creep detected:**
    - All other changes (removals, or low-weight additions with delta < 5).
+
+### Purpose Alignment
+- **Consistent:** All added capabilities align with declared purpose and structure.
+- **Inconsistent:** One or more added capabilities exceed capabilities explained by stated purpose.
+- **Unclear:** Purpose alignment cannot be conclusively established without manual review.
 

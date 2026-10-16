@@ -101,9 +101,58 @@ AEGIS assessments always display:
 
 ---
 
-## 6. How to Safely Change a Permission Weight
+## 6. Excess Score ($J$) & Evidence Coverage Formulation
+
+The excess score measures the proportion of requested capabilities that appear over-privileged or insufficiently explained by the extension's stated purpose and manifest structure (PRD Section 4.5 line 233, Milestone M5).
+
+### 6.1 Status Multipliers ($m_i$)
+Each evaluated permission item receives a status multiplier:
+- **`justified`:** $m_i = 0.0$ (capability aligns with stated purpose or structural manifest features)
+- **`needs_review`:** $m_i = 0.5$ (weight $\ge 3$ capability not explained by recognized purpose or features)
+- **`potentially_excessive`:** $m_i = 1.0$ (capability exceeds what is needed when narrower alternatives exist)
+- **`unknown`:** Excluded from calculation (insufficient information)
+
+### 6.2 Evidence Coverage
+Evidence coverage is the ratio of weight of evaluated items (excluding `unknown`) to total requested weight:
+
+$$\text{Coverage} = \frac{\sum_{i \in \text{assessed}} w_i}{\sum_{i \in \text{requested}} w_i}$$
+
+- If total requested weight is 0, $\text{Coverage} = 1.0$.
+- If $\text{Coverage} < 0.5$, the excess score cannot be reliably calculated and is reported as `null` (`None`), rendered in the UI as *"Not enough evidence to estimate."*
+
+### 6.3 Excess Score Calculation
+When $\text{Coverage} \ge 0.5$:
+
+$$J = \min\left(100, \max\left(0, \left\lfloor 100 \times \frac{\sum_{i \in \text{assessed}} (w_i \times m_i)}{\sum_{i \in \text{assessed}} w_i} + 0.5 \right\rfloor\right)\right)$$
+
+Standard arithmetic half-up rounding (`floor(x + 0.5)`) is used.
+
+---
+
+## 7. Deterministic Justification Checker Rules
+
+### 7.1 API Permission Rules (Evaluated in strict priority order)
+- **Rule 1 (`R1`):** Capability has weight 1 (minimal risk) $\to$ `justified` (`common`).
+- **Rule 2 (`R2`):** Manifest structural evidence present for this capability $\to$ `justified` (`structural`).
+- **Rule 3 (`R3`):** Stated description matches a recognized purpose tag that typically requires this capability $\to$ `justified` (`stated_purpose`).
+- **Rule 4 (`R4`):** Description is missing, under 20 characters, or contains no recognized purpose $\to$ `unknown` (strictly prevents excessive classification without sufficient context).
+- **Rule 5 (`R5`):** Recognized purpose matches, but capability has high weight (4 or 5) and a documented narrower alternative exists $\to$ `potentially_excessive` (`narrower_alternative_exists`).
+- **Rule 6 (`R6`):** Otherwise, weight $\ge 3 \to$ `needs_review`; lower weights $\to$ `unknown`.
+
+### 7.2 Host Permission Rules (Evaluated in strict priority order)
+- **Rule H1 (`H1`):** Host domain is explicitly named in the description $\to$ `justified` (`domain_in_description`).
+- **Rule 1 (`R1`):** Pattern is scoped to a single host (`single_host` tier) $\to$ `justified` (`single_host`).
+- **Rule 4 (`R4`):** Description is missing or under 20 characters $\to$ `unknown`.
+- **Rule H2 (`H2`):** Declared single-site purpose (e.g. GitHub/YouTube enhancer) but requested broad `all_sites` $\to$ `potentially_excessive` (`single_site_mismatch`).
+- **Rule H3 (`H3`):** Broad host pattern requested when narrower alternatives exist $\to$ `potentially_excessive` (`broad_host_access`).
+- **Rule 6 (`R6`):** Otherwise, weight $\ge 3 \to$ `needs_review`; lower weights $\to$ `unknown`.
+
+---
+
+## 8. How to Safely Change a Permission Weight or Purpose Tag
 
 1. Edit `Backend/data/permission_knowledge.json`.
-2. Add or adjust the `weight`, provide `allows`, `legitimate_use`, documentation `source`, and set `reviewed: true` if verified against official Chrome/MDN docs.
+2. Add or adjust the `weight`, provide `allows`, `legitimate_use`, documentation `source`, `narrower_alternative`, and set `reviewed: true` if verified against official Chrome/MDN docs.
 3. Run `python scripts/gen_rules_doc.py` to regenerate `docs/RULES.md`.
 4. Run `pytest tests/core/` to ensure all scoring goldens, determinism, and stale documentation checks pass.
+
