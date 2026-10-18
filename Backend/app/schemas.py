@@ -67,6 +67,8 @@ class ExtensionDescription(StrictBaseModel):
 
 class ExtensionCapabilities(StrictBaseModel):
     ai_analysis: bool = False
+    model: str | None = None
+    prompt_version: str | None = None
 
 
 class ExtensionDetailResponse(StrictBaseModel):
@@ -112,6 +114,10 @@ class PermissionsResponse(StrictBaseModel):
 class VersionItem(StrictBaseModel):
     version: str
     released: str | None = None
+    risk_score: int | None = None
+    captured_at: str | None = None
+    manifest_hash: str | None = None
+    is_suspicious: bool | None = None
 
 
 class VersionsResponse(StrictBaseModel):
@@ -173,3 +179,29 @@ class ImportResponse(StrictBaseModel):
     snapshot: ImportSnapshotResult
     matched_existing: bool
     warnings: list[str] = Field(default_factory=list)
+
+
+# ============================================================================
+# 8. AI Overview (Milestone 2)
+# ============================================================================
+class AIOverviewRequest(StrictBaseModel):
+    extension_id: str = Field(..., pattern=r"^[A-Za-z0-9._:-]{1,128}$")
+    version: str | None = Field(default=None, max_length=64)
+    older_version: str | None = Field(default=None, max_length=64)
+    force_refresh: bool = False
+
+
+class AIOverviewResponse(StrictBaseModel):
+    extension_id: str
+    version: str
+    summary: str
+    permission_fit: str
+    creep_detected: bool
+    creep_risks: list[str] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(default_factory=list)
+    model: str
+    disclaimer: str = (
+        "AI-generated from the manifest and description. AEGIS does not inspect extension code."
+    )
+    cached: bool = False
+

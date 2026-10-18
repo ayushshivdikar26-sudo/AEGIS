@@ -9,7 +9,7 @@ from Backend.app.config import Settings
 
 
 def test_settings_development_defaults():
-    s = Settings(ENVIRONMENT="development", SUPABASE_URL="https://localhost.supabase.co")
+    s = Settings(_env_file=None, ENVIRONMENT="development", SUPABASE_URL="https://localhost.supabase.co")
     assert s.ENVIRONMENT == "development"
     assert s.COOKIE_SECURE is False
     assert s.AI_ENABLED is False

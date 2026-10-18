@@ -3,9 +3,23 @@ AEGIS Database Access Repository (Backend/app/repo.py)
 Sole point of database access; executes queries using user-scoped Supabase client or local mock store (PRD Part 2c s4).
 """
 
+import contextlib
+import sys
 import uuid
 from typing import Any
 
+from Backend.app.db import (
+    db_clear_all_tables,
+    db_delete_extension,
+    db_find_extension_by_store_or_name,
+    db_get_extension,
+    db_get_snapshot_by_version,
+    db_insert_snapshot,
+    db_list_extensions,
+    db_list_snapshots,
+    db_upsert_extension,
+    init_db,
+)
 from Backend.app.errors import ConflictError, NotFoundError
 from Backend.app.logging_setup import logger
 from Backend.core.models import ParsedManifest
@@ -20,18 +34,23 @@ _MOCK_STORE: dict[str, dict[str, Any]] = {
 
 
 def reset_mock_store() -> None:
-    """Resets in-memory mock store for test isolation."""
+    """Resets in-memory mock store and clears test DB for test isolation."""
     global _MOCK_STORE
     _MOCK_STORE = {"extensions": {}, "snapshots": {}, "creep_records": {}}
+    if "pytest" in sys.modules:
+        with contextlib.suppress(Exception):
+            db_clear_all_tables()
 
 
 def seed_mock_store_from_fixtures() -> None:
-    """Populates in-memory store with real installed browser extensions, or fallback fixtures."""
+    """Populates in-memory store and persistent DB with real installed browser extensions, or fallback fixtures."""
     import json
     from pathlib import Path
 
-    if _MOCK_STORE["extensions"]:
-        return
+    try:
+        init_db()
+    except Exception as exc:
+        logger.warning(f"Error initializing persistent DB: {exc}")
 
     # 1. Attempt to scan real installed extensions from Chromium browsers on the system
     try:
@@ -56,7 +75,7 @@ def seed_mock_store_from_fixtures() -> None:
         desc_obj = ext.get("description", {})
         desc_text = desc_obj.get("text") if isinstance(desc_obj, dict) else str(desc_obj or "")
 
-        _MOCK_STORE["extensions"][ext_id] = {
+        ext_record = {
             "id": ext_id,
             "user_id": user_id,
             "browser": ext.get("browser", "chrome").lower().replace("google ", ""),
@@ -67,6 +86,9 @@ def seed_mock_store_from_fixtures() -> None:
             "description": desc_text,
             "updated_at": "2026-10-15T12:00:00Z",
         }
+        _MOCK_STORE["extensions"][ext_id] = ext_record
+        with contextlib.suppress(Exception):
+            db_upsert_extension(ext_record)
 
         perms = ext.get("permissions", {})
         versions_list = ext.get(
@@ -87,7 +109,7 @@ def seed_mock_store_from_fixtures() -> None:
             elif ext_id == "sample-ad-shield" and v_str == "3.0.0":
                 host_list = ["https://adserver.com/*"]
 
-            _MOCK_STORE["snapshots"][snap_id] = {
+            snap_record = {
                 "id": snap_id,
                 "extension_id": ext_id,
                 "user_id": user_id,
@@ -105,13 +127,20 @@ def seed_mock_store_from_fixtures() -> None:
                 "manifest": {},
                 "manifest_sha256": f"mock_sha_{ext_id}_{v_str}",
                 "captured_at": v_entry.get("captured_at", "2026-10-15T12:00:00Z"),
+                "risk_score": 0,
             }
+            _MOCK_STORE["snapshots"][snap_id] = snap_record
+            with contextlib.suppress(Exception):
+                db_insert_snapshot(snap_record)
 
 
 class Repository:
-    def __init__(self, client: Client | None = None, use_mock: bool = False):
+    def __init__(self, client: Client | None = None, use_mock: bool | None = None):
         self.client = client
-        self.use_mock = use_mock or (client is None)
+        if use_mock is not None:
+            self.use_mock = use_mock
+        else:
+            self.use_mock = client is None and "pytest" in sys.modules
 
     # =========================================================================
     # 1. Extensions
@@ -125,6 +154,17 @@ class Repository:
             ]
             return user_exts[:limit]
 
+        if self.client is None:
+            db_exts = db_list_extensions(user_id=user_id, limit=limit)
+            if db_exts:
+                return db_exts
+            # Fallback to mock store if DB is empty
+            return [
+                ext
+                for ext in _MOCK_STORE["extensions"].values()
+                if ext["user_id"] == user_id or ext.get("is_public", False)
+            ][:limit]
+
         try:
             assert self.client is not None
             resp = (
@@ -133,10 +173,13 @@ class Repository:
                 .limit(limit)
                 .execute()
             )
-            return resp.data or []
+            if resp.data:
+                return resp.data
+            # If Supabase table is empty or unpopulated, fallback to persistent local DB
+            return db_list_extensions(user_id=user_id, limit=limit)
         except Exception as exc:
-            logger.warning(f"Error fetching extensions: {exc}")
-            return []
+            logger.warning(f"Error fetching extensions from Supabase: {exc}")
+            return db_list_extensions(user_id=user_id, limit=limit)
 
     def get_extension(self, user_id: str, ext_id: str) -> dict[str, Any]:
         if self.use_mock:
@@ -145,22 +188,52 @@ class Repository:
                 raise NotFoundError("Extension not found.")
             return ext
 
+        if self.client is None:
+            try:
+                return db_get_extension(ext_id, user_id=user_id)
+            except NotFoundError:
+                ext = _MOCK_STORE["extensions"].get(ext_id)
+                if ext and (ext["user_id"] == user_id or ext.get("is_public", False)):
+                    return ext
+                raise NotFoundError("Extension not found.")
+
         try:
             assert self.client is not None
             resp = self.client.table("extensions").select("*").eq("id", ext_id).limit(1).execute()
-            if not resp.data:
-                raise NotFoundError("Extension not found.")
-            return resp.data[0]
+            if resp.data:
+                return resp.data[0]
+            # Try by store_id if ext_id is a browser store ID
+            resp2 = self.client.table("extensions").select("*").eq("store_id", ext_id).limit(1).execute()
+            if resp2.data:
+                return resp2.data[0]
         except Exception as exc:
-            if isinstance(exc, NotFoundError):
-                raise exc
-            logger.warning(f"Error getting extension {ext_id}: {exc}")
+            logger.warning(f"Error getting extension {ext_id} from Supabase: {exc}")
+
+        # Fallback to local persistent DB
+        try:
+            return db_get_extension(ext_id, user_id=user_id)
+        except NotFoundError:
+            ext = _MOCK_STORE["extensions"].get(ext_id)
+            if ext and (ext["user_id"] == user_id or ext.get("is_public", False)):
+                return ext
             raise NotFoundError("Extension not found.")
 
     def find_extension_by_store_or_name(
         self, user_id: str, browser: str, store_id: str | None, name: str
     ) -> dict[str, Any] | None:
         if self.use_mock:
+            for ext in _MOCK_STORE["extensions"].values():
+                if ext["user_id"] == user_id and ext["browser"] == browser:
+                    if store_id and ext.get("store_id") == store_id:
+                        return ext
+                    if not store_id and ext.get("name", "").lower() == name.lower():
+                        return ext
+            return None
+
+        if self.client is None:
+            found = db_find_extension_by_store_or_name(browser, store_id, name, user_id=user_id)
+            if found:
+                return found
             for ext in _MOCK_STORE["extensions"].values():
                 if ext["user_id"] == user_id and ext["browser"] == browser:
                     if store_id and ext.get("store_id") == store_id:
@@ -202,6 +275,10 @@ class Repository:
             _MOCK_STORE["extensions"][ext_id] = record
             return record
 
+        if self.client is None:
+            _MOCK_STORE["extensions"][ext_id] = record
+            return db_upsert_extension(record)
+
         try:
             assert self.client is not None
             resp = self.client.table("extensions").insert(record).execute()
@@ -220,6 +297,12 @@ class Repository:
             to_del = [sid for sid, s in _MOCK_STORE["snapshots"].items() if s["extension_id"] == ext_id]
             for sid in to_del:
                 del _MOCK_STORE["snapshots"][sid]
+            return
+
+        if self.client is None:
+            if ext_id in _MOCK_STORE["extensions"]:
+                del _MOCK_STORE["extensions"][ext_id]
+            db_delete_extension(ext_id, user_id=user_id)
             return
 
         try:
@@ -247,6 +330,14 @@ class Repository:
             snaps.sort(key=lambda s: (s.get("version_key") or (), s.get("captured_at", "")), reverse=True)
             return snaps
 
+        if self.client is None:
+            db_snaps = db_list_snapshots(ext_id, user_id=user_id)
+            if db_snaps:
+                return db_snaps
+            snaps = [s for s in _MOCK_STORE["snapshots"].values() if s["extension_id"] == ext_id]
+            snaps.sort(key=lambda s: (s.get("version_key") or (), s.get("captured_at", "")), reverse=True)
+            return snaps
+
         try:
             assert self.client is not None
             resp = (
@@ -257,10 +348,18 @@ class Repository:
                 .order("captured_at", desc=True)
                 .execute()
             )
-            return resp.data or []
+            if resp.data:
+                return resp.data
         except Exception as exc:
-            logger.warning(f"Error listing snapshots for {ext_id}: {exc}")
-            return []
+            logger.warning(f"Error listing snapshots from Supabase for {ext_id}: {exc}")
+
+        # Fallback to local persistent DB
+        db_snaps = db_list_snapshots(ext_id, user_id=user_id)
+        if db_snaps:
+            return db_snaps
+        snaps = [s for s in _MOCK_STORE["snapshots"].values() if s["extension_id"] == ext_id]
+        snaps.sort(key=lambda s: (s.get("version_key") or (), s.get("captured_at", "")), reverse=True)
+        return snaps
 
     def get_snapshot_by_version(self, user_id: str, ext_id: str, version: str) -> dict[str, Any]:
         if self.use_mock:
@@ -268,6 +367,15 @@ class Repository:
                 if s["extension_id"] == ext_id and s["version"] == version:
                     return s
             raise NotFoundError(f"Version {version} not found for extension.")
+
+        if self.client is None:
+            try:
+                return db_get_snapshot_by_version(ext_id, version, user_id=user_id)
+            except NotFoundError:
+                for s in _MOCK_STORE["snapshots"].values():
+                    if s["extension_id"] == ext_id and s["version"] == version:
+                        return s
+                raise NotFoundError(f"Version {version} not found for extension.")
 
         try:
             assert self.client is not None
@@ -279,27 +387,35 @@ class Repository:
                 .limit(1)
                 .execute()
             )
-            if not resp.data:
-                raise NotFoundError(f"Version {version} not found.")
-            return resp.data[0]
+            if resp.data:
+                return resp.data[0]
         except Exception as exc:
-            if isinstance(exc, NotFoundError):
-                raise exc
-            logger.warning(f"Error getting snapshot {version}: {exc}")
-            raise NotFoundError(f"Version {version} not found.")
+            logger.warning(f"Error getting snapshot {version} from Supabase: {exc}")
 
-    def insert_snapshot(self, user_id: str, ext_id: str, manifest: ParsedManifest) -> tuple[dict[str, Any], bool]:
+        # Fallback to local persistent DB
+        try:
+            return db_get_snapshot_by_version(ext_id, version, user_id=user_id)
+        except NotFoundError:
+            for s in _MOCK_STORE["snapshots"].values():
+                if s["extension_id"] == ext_id and s["version"] == version:
+                    return s
+            raise NotFoundError(f"Version {version} not found for extension.")
+
+    def insert_snapshot(
+        self, user_id: str, ext_id: str, manifest: ParsedManifest, source: str = "local"
+    ) -> tuple[dict[str, Any], bool]:
         """
         Inserts snapshot append-only.
         Returns (snapshot_record, created_boolean).
-        Raises ConflictError if version exists with different SHA-256.
+        Raises ConflictError if version exists with different SHA-256 and revisions not allowed.
         """
         # Check existing version
         try:
             existing = self.get_snapshot_by_version(user_id, ext_id, manifest.version)
             if existing["manifest_sha256"] == manifest.sha256:
                 return existing, False
-            raise ConflictError("Version conflict: A different manifest with this version already exists.")
+            if self.client is not None or self.use_mock:
+                raise ConflictError("Version conflict: A different manifest with this version already exists.")
         except NotFoundError:
             pass
 
@@ -321,11 +437,16 @@ class Repository:
             "features": sorted(list(manifest.features)),
             "manifest": manifest.model_dump(),
             "manifest_sha256": manifest.sha256,
+            "source": source,
         }
 
         if self.use_mock:
             _MOCK_STORE["snapshots"][snap_id] = record
             return record, True
+
+        if self.client is None:
+            _MOCK_STORE["snapshots"][snap_id] = record
+            return db_insert_snapshot(record)
 
         try:
             assert self.client is not None
@@ -334,3 +455,4 @@ class Repository:
         except Exception as exc:
             logger.error(f"Error inserting snapshot: {exc}")
             raise exc
+

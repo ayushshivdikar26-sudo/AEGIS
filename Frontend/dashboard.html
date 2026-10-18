@@ -59,6 +59,11 @@
         <div id="fixture-notice" class="fixture-banner is-hidden">
           Sample data from dev mock API
         </div>
+        <div class="history-backup-row">
+          <button id="export-history-btn" class="backup-btn" type="button" title="Export snapshot history to JSON backup">Export History</button>
+          <button id="import-history-btn" class="backup-btn" type="button" title="Import snapshot history from JSON backup">Import History</button>
+          <input type="file" id="import-history-file" accept=".json" class="is-hidden" aria-hidden="true">
+        </div>
       </div>
     </nav>
 
@@ -84,6 +89,7 @@
     </symbol>
   </svg>
 
-  <script type="module" src="js/main.js"></script>
+  <script src="js/file-check.js"></script>
+  <script type="module" src="js/main.js?v=1.1"></script>
 </body>
 </html>

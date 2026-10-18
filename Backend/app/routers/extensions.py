@@ -163,7 +163,25 @@ async def list_extension_versions(
     repo.get_extension(user_id, id)
     snaps = repo.list_snapshots(user_id, id)
 
-    items = [{"version": s["version"], "released": str(s.get("captured_at", ""))[:10]} for s in snaps]
+    items = []
+    for s in snaps:
+        score = s.get("risk_score")
+        if score is None or score == 0:
+            try:
+                assessment = compute_snapshot_assessment(s)
+                score = assessment.get("risk_score", 0)
+            except Exception:
+                score = 0
+        items.append(
+            {
+                "version": s["version"],
+                "released": str(s.get("captured_at", ""))[:10],
+                "risk_score": score,
+                "captured_at": str(s.get("captured_at", "")),
+                "manifest_hash": str(s.get("manifest_sha256", "")),
+                "is_suspicious": bool(s.get("is_suspicious", False)),
+            }
+        )
     return VersionsResponse(versions=items)  # type: ignore[arg-type]
 
 
