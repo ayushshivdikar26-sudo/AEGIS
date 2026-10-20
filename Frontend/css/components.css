@@ -1213,3 +1213,48 @@
   justify-content: flex-end;
   gap: var(--s-3);
 }
+
+
+/* ==========================================================================
+   AEGIS Wordmark (Milestone 2 - Part A3)
+   ========================================================================== */
+.aegis-wordmark {
+  font-family: 'Michroma', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  font-weight: 400;
+  display: inline-flex;
+  align-items: center;
+  color: var(--text);
+  line-height: 1;
+  user-select: none;
+}
+
+.aegis-wordmark .wordmark-a {
+  display: inline-block;
+  transform: rotate(180deg);
+  line-height: 1;
+  transform-origin: 50% 50%;
+  margin-right: 0.04em;
+}
+
+.aegis-wordmark--sm {
+  font-size: 14px;
+}
+
+.aegis-wordmark--md {
+  font-size: 22px;
+}
+
+.aegis-wordmark--lg {
+  font-size: 32px;
+}
+
+.aegis-wordmark--xl {
+  font-size: 48px;
+}
+
+.aegis-wordmark--glow {
+  color: var(--aegis-blue);
+  text-shadow: 0 0 16px var(--aegis-blue-glow);
+}
