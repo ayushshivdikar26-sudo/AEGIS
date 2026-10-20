@@ -208,8 +208,6 @@
   background-color: var(--bg);
 }
 
-
-
 /* App Shell */
 .app-shell {
   display: flex;
@@ -217,7 +215,7 @@
   position: relative;
 }
 
-/* Mobile Header (Hidden on Desktop >= 1024px) */
+/* Mobile Header (Hidden on Desktop >= 768px) */
 .mobile-header {
   display: none;
   height: 56px;
@@ -253,9 +251,9 @@
   flex: 1;
 }
 
-/* Persistent Left Sidebar (Desktop: 320px fixed) */
+/* Persistent Left Sidebar (Desktop: clamp(400px, 27vw, 520px) - C4) */
 .sidebar {
-  width: 320px;
+  width: clamp(400px, 27vw, 520px);
   height: 100vh;
   position: sticky;
   top: 0;
@@ -275,12 +273,26 @@
   border-bottom: 1px solid var(--border);
 }
 
-.wordmark {
-  font-size: var(--text-base);
-  font-weight: 600;
-  letter-spacing: 0.2em;
-  color: var(--text);
-  text-transform: uppercase;
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  cursor: pointer;
+  outline: none;
+}
+
+.sidebar-brand:focus-visible {
+  outline: 2px solid var(--aegis-blue);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.sidebar-brand-mark {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px var(--aegis-blue-glow));
 }
 
 .sidebar-search-area {
@@ -291,7 +303,7 @@
 .sidebar-list-container {
   flex: 1;
   overflow-y: auto;
-  padding: var(--s-2);
+  padding: var(--s-3);
 }
 
 .sidebar-footer {
@@ -311,13 +323,13 @@
 
 .content-column {
   width: 100%;
-  max-width: 880px;
+  max-width: 1120px;
   display: flex;
   flex-direction: column;
-  gap: var(--s-5); /* 24px gap between opaque panels */
+  gap: 24px; /* 24px gap between opaque panels */
 }
 
-/* Modern Slate / Navy Panel Foundation (Matching AEGIS DUMMY) */
+/* Modern Slate / Navy Panel Foundation (Matching AEGIS Brand) */
 .panel {
   background: var(--surface-card);
   border: 1px solid var(--border);
@@ -329,6 +341,14 @@
   gap: var(--s-4);
 }
 
+/* Row 1 Layout: 2-column grid (Left: Identity Card, Right: Risk Gauge - C2) */
+.dashboard-row-1 {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
 /* Drawer Backdrop for Mobile */
 .drawer-backdrop {
   display: none;
@@ -338,10 +358,21 @@
   z-index: 90;
 }
 
-/* Responsive Breakpoints */
+/* Responsive Breakpoints (C5) */
 
-/* Tablet & Mobile (< 1024px) */
-@media (max-width: 1023px) {
+/* Laptop / Intermediate Collapse (< 1100px) */
+@media (max-width: 1100px) {
+  .dashboard-row-1 {
+    grid-template-columns: 1fr;
+  }
+
+  .risk-assessment-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Tablet & Mobile Slide-Out Drawer (< 768px) */
+@media (max-width: 767px) {
   .mobile-header {
     display: flex;
   }
@@ -353,8 +384,9 @@
   .sidebar {
     position: fixed;
     top: 0;
-    left: -320px;
-    width: 320px;
+    left: -360px;
+    width: 360px;
+    max-width: 88vw;
     height: 100vh;
     z-index: 100;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
@@ -362,7 +394,7 @@
   }
 
   .sidebar.open {
-    transform: translateX(320px);
+    transform: translateX(360px);
   }
 
   .drawer-backdrop.active {
@@ -370,19 +402,16 @@
   }
 
   .main-content {
-    padding: var(--s-4) var(--s-4);
-  }
-}
-
-/* Small Screens (< 600px) */
-@media (max-width: 599px) {
-  .main-content {
     padding: var(--s-4) var(--s-3);
   }
 
   .panel {
     padding: var(--s-4);
-    border-radius: var(--radius);
+  }
+
+  .gauge-svg {
+    width: 180px !important;
+    height: 105px !important;
   }
 
   .version-selectors {

@@ -20,16 +20,12 @@ import {
   getComparison,
   getCreep,
   importExtension,
-  exportHistory,
-  importHistory,
   getAIOverview,
 } from "./api.js";
 import { validateManifestPreflight } from "./lib/validate_manifest.js";
 import { renderSidebarList } from "./render/sidebar.js";
 import { renderIdentity } from "./render/identity.js";
-import { renderGauge } from "./render/gauge.js";
-import { renderGuide } from "./render/guide.js";
-import { renderAbout } from "./render/about.js";
+import { renderGauge, renderRiskAssessment } from "./render/gauge.js";
 import { renderPermissions } from "./render/permissions.js";
 import { renderVersions } from "./render/versions.js";
 import { renderCreep } from "./render/creep.js";
@@ -79,7 +75,6 @@ function scrollToDashboard(callback) {
 
   requestAnimationFrame(step);
 }
-
 
 // Announce text to polite live region
 function announce(message) {
@@ -150,35 +145,49 @@ function setupImportModal() {
     backdrop.classList.add("active");
     backdrop.setAttribute("aria-hidden", "false");
     importBtn.setAttribute("aria-expanded", "true");
-    if (errorBanner) errorBanner.classList.add("is-hidden");
-    if (fileInput) fileInput.focus();
+    if (errorBanner) {
+      errorBanner.classList.add("is-hidden");
+      errorBanner.textContent = "";
+    }
+    form.reset();
+    setTimeout(() => {
+      const firstInput = form.querySelector("input, textarea, select");
+      if (firstInput) firstInput.focus();
+    }, 50);
   }
 
   function closeModal() {
     backdrop.classList.remove("active");
     backdrop.setAttribute("aria-hidden", "true");
     importBtn.setAttribute("aria-expanded", "false");
-    form.reset();
-    if (errorBanner) errorBanner.classList.add("is-hidden");
-    if (submitBtn) submitBtn.disabled = false;
-    if (submitText) submitText.textContent = "Analyze Manifest";
+    setSubmitting(false);
     importBtn.focus();
   }
 
-  importBtn.addEventListener("click", openModal);
-  const heroImportBtn = document.getElementById("hero-btn-import");
-  if (heroImportBtn) {
-    heroImportBtn.addEventListener("click", () => {
-      scrollToDashboard(() => {
-        openModal();
-      });
-    });
+  function showError(msg) {
+    if (errorBanner) {
+      errorBanner.textContent = msg;
+      errorBanner.classList.remove("is-hidden");
+    }
   }
+
+  function setSubmitting(isSubmitting) {
+    if (submitBtn) {
+      submitBtn.disabled = isSubmitting;
+    }
+    if (submitText) {
+      submitText.textContent = isSubmitting ? "Importing..." : "Import Manifest";
+    }
+  }
+
+  importBtn.addEventListener("click", openModal);
   if (closeBtn) closeBtn.addEventListener("click", closeModal);
   if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
 
   backdrop.addEventListener("click", (e) => {
-    if (e.target === backdrop) closeModal();
+    if (e.target === backdrop) {
+      closeModal();
+    }
   });
 
   window.addEventListener("keydown", (e) => {
@@ -187,17 +196,40 @@ function setupImportModal() {
     }
   });
 
-  function showError(msg) {
-    if (errorBanner) {
-      errorBanner.textContent = msg;
-      errorBanner.classList.remove("is-hidden");
-    }
-    announce(`Import error: ${msg}`);
+  // Drag and drop support on modal dialog
+  const dialog = backdrop.querySelector(".modal-dialog");
+  if (dialog) {
+    dialog.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      dialog.classList.add("dragover");
+    });
+    dialog.addEventListener("dragleave", (e) => {
+      if (!dialog.contains(e.relatedTarget)) {
+        dialog.classList.remove("dragover");
+      }
+    });
+    dialog.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dialog.classList.remove("dragover");
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        if (fileInput) {
+          fileInput.files = e.dataTransfer.files;
+          const fileNameEl = document.getElementById("import-file-name");
+          if (fileNameEl) {
+            fileNameEl.textContent = e.dataTransfer.files[0].name;
+          }
+        }
+      }
+    });
   }
 
-  function setSubmitting(isSubmitting) {
-    if (submitBtn) submitBtn.disabled = isSubmitting;
-    if (submitText) submitText.textContent = isSubmitting ? "Analyzing Manifest..." : "Analyze Manifest";
+  if (fileInput) {
+    fileInput.addEventListener("change", () => {
+      const fileNameEl = document.getElementById("import-file-name");
+      if (fileNameEl) {
+        fileNameEl.textContent = fileInput.files[0] ? fileInput.files[0].name : "No file chosen";
+      }
+    });
   }
 
   form.addEventListener("submit", async (e) => {
@@ -207,23 +239,15 @@ function setupImportModal() {
     let manifestRaw = "";
     let fileName = "manifest.json";
 
-    const file = fileInput.files && fileInput.files[0];
-    const pasted = pasteInput.value.trim();
+    const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+    const pasted = pasteInput ? pasteInput.value.trim() : "";
 
-    if (file) {
-      if (!file.name.toLowerCase().endsWith(".json") && file.type && !file.type.includes("json")) {
-        showError("Only .json manifest files are supported.");
-        return;
-      }
-      if (file.size > 1048576) {
-        showError("Manifest file exceeds 1 MB limit.");
-        return;
-      }
+    if (hasFile) {
       try {
-        manifestRaw = await file.text();
-        fileName = file.name;
+        manifestRaw = await fileInput.files[0].text();
+        fileName = fileInput.files[0].name;
       } catch (err) {
-        showError(`Could not read file: ${err.message}`);
+        showError("Could not read the uploaded file.");
         return;
       }
     } else if (pasted) {
@@ -376,23 +400,17 @@ async function selectExtension(id) {
     // Render Panels:
     contentCol.replaceChildren();
 
-    // Guided Demo Quick-Selector Banner (For Non-Technical Audiences)
-    contentCol.appendChild(
-      renderGuide({
-        selectedId: id,
-        onSelect: selectExtension,
-        onOpenImport: () => {
-          const btn = document.getElementById("import-btn");
-          if (btn) btn.click();
-        },
-      })
-    );
+    // Row 1: Two-column grid (Left: Identity Card, Right: Risk Gauge & Score Card)
+    const row1 = document.createElement("div");
+    row1.className = "dashboard-row-1";
+    row1.appendChild(renderIdentity(extData));
+    row1.appendChild(renderGauge(extData.assessment));
+    contentCol.appendChild(row1);
 
-    contentCol.appendChild(renderIdentity(extData));
-    contentCol.appendChild(renderGauge(extData.assessment));
-    contentCol.appendChild(renderAbout(extData));
+    // Row 2: Risk Assessment Breakdown
+    contentCol.appendChild(renderRiskAssessment(extData.assessment));
 
-    // Milestone 2: AI Overview Card (Non-blocking async load with request cancellation)
+    // Row 3: AI Overview Card (Non-blocking async load with request cancellation)
     contentCol.appendChild(renderAISkeleton());
 
     if (aiAbortController) {
@@ -452,6 +470,7 @@ async function selectExtension(id) {
     };
     loadAI(false);
 
+    // Row 4: Declared Permissions
     if (permsData.error) {
       contentCol.appendChild(renderError("Failed to load permissions.", () => selectExtension(id)));
     } else {
@@ -481,6 +500,7 @@ async function selectExtension(id) {
       }
     };
 
+    // Row 5: Version History & Creep
     contentCol.appendChild(
       renderVersions(versionsData, compData, {
         onVersionChange: handleVersionDiff,
@@ -562,6 +582,22 @@ async function init() {
     console.warn("hero buttons warning:", err);
   }
 
+  // 1d. Wire Sidebar Brand to Scroll to Top
+  try {
+    const sidebarBrand = document.getElementById("sidebar-brand-link");
+    if (sidebarBrand) {
+      sidebarBrand.addEventListener("click", (e) => {
+        e.preventDefault();
+        const hero = document.getElementById("hero-track");
+        if (hero) {
+          hero.scrollIntoView({ behavior: "smooth" });
+        }
+      });
+    }
+  } catch (err) {
+    console.warn("sidebar brand warning:", err);
+  }
+
   // 2. Setup Mobile Navigation (Fail-safe)
   try {
     setupMobileDrawer();
@@ -615,58 +651,7 @@ async function init() {
     console.warn("search setup warning:", err);
   }
 
-  // 4. Setup History Export & Import (Milestone 1c)
-  try {
-    const exportBtn = document.getElementById("export-history-btn");
-    if (exportBtn) {
-      exportBtn.addEventListener("click", async () => {
-        try {
-          const backupData = await exportHistory();
-          const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `aegis-history-backup-${new Date().toISOString().slice(0, 10)}.json`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          announce("Snapshot history exported successfully.");
-        } catch (err) {
-          alert(`Failed to export history: ${err.message}`);
-        }
-      });
-    }
-
-    const importBtn = document.getElementById("import-history-btn");
-    const importFileInput = document.getElementById("import-history-file");
-    if (importBtn && importFileInput) {
-      importBtn.addEventListener("click", () => {
-        importFileInput.click();
-      });
-
-      importFileInput.addEventListener("change", async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        try {
-          const text = await file.text();
-          const jsonPayload = JSON.parse(text);
-          const res = await importHistory(jsonPayload);
-          announce(`History imported: ${res.imported_snapshots} snapshots loaded.`);
-          alert(`Import successful! ${res.imported_snapshots} snapshots imported (${res.skipped_snapshots} existing skipped).`);
-          window.location.reload();
-        } catch (err) {
-          alert(`Import failed: ${err.message}`);
-        } finally {
-          importFileInput.value = "";
-        }
-      });
-    }
-  } catch (err) {
-    console.warn("history buttons warning:", err);
-  }
-
-  // 5. Listen for hash changes
+  // 4. Listen for hash changes
   window.addEventListener("hashchange", () => {
     const hash = window.location.hash;
     const match = hash.match(/^#\/ext\/([A-Za-z0-9._:-]{1,128})$/);
@@ -675,7 +660,7 @@ async function init() {
     }
   });
 
-  // 6. Fetch Extensions List and Initialize Selection
+  // 5. Fetch Extensions List and Initialize Selection
   const listContainer = document.getElementById("extension-list");
   try {
     const data = await (preloadExtensionsPromise || getExtensions());

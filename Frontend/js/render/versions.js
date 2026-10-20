@@ -1,8 +1,7 @@
 /**
  * AEGIS Version Comparison & History Timeline Renderer (render/versions.js)
  * Compares two snapshot versions, highlighting added, broadened, retained, and removed permissions (Part 1 s7.5).
- * Implements Milestone 1b (mutual option disabling, revert on invalid, semver sorting)
- * and Milestone 1c (historical timeline with "What changed?" drill-down).
+ * Enhanced with C6 font sizes and tokens.
  */
 
 import { h } from "../dom.js";
@@ -63,7 +62,7 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
         {
           style: {
             "color": "var(--text-muted)",
-            "font-size": "var(--text-sm)",
+            "font-size": "16px",
             "font-style": "italic",
             "padding": "var(--s-3) 0",
           },
@@ -79,42 +78,63 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
     return panel;
   }
 
-  // Sort versions semantically descending (newest version first)
-  const versionsList = [...rawList].sort((a, b) => compareSemver(b.version, a.version));
+  // Deduplicate and sort versions descending by semantic version
+  const uniqueVersions = [];
+  const seenVersions = new Set();
+  for (const v of rawList) {
+    if (v.version && !seenVersions.has(v.version)) {
+      seenVersions.add(v.version);
+      uniqueVersions.push(v);
+    }
+  }
 
-  // Default selection: older = second-latest, newer = latest
-  const defaultFrom = versionsList[1]?.version;
-  const defaultTo = versionsList[0]?.version;
+  const versionsList = uniqueVersions.sort((a, b) => compareSemver(b.version, a.version));
 
-  let currentFrom = comparisonData && comparisonData.from ? comparisonData.from : defaultFrom;
-  let currentTo = comparisonData && comparisonData.to ? comparisonData.to : defaultTo;
+  // Determine active versions
+  let currentFrom = comparisonData ? comparisonData.version_from : (versionsList[1] ? versionsList[1].version : null);
+  let currentTo = comparisonData ? comparisonData.version_to : (versionsList[0] ? versionsList[0].version : null);
 
-  // Validate that currentFrom < currentTo
-  if (compareSemver(currentFrom, currentTo) >= 0) {
-    currentFrom = defaultFrom;
-    currentTo = defaultTo;
+  if (!currentFrom && versionsList.length >= 2) {
+    currentFrom = versionsList[1].version;
+  }
+  if (!currentTo && versionsList.length >= 1) {
+    currentTo = versionsList[0].version;
   }
 
   let lastValidOlder = currentFrom;
   let lastValidNewer = currentTo;
 
-  // Version Selectors
-  const olderSelect = h("select", { className: "version-select", "aria-label": "Older version" });
-  const newerSelect = h("select", { className: "version-select", "aria-label": "Newer version" });
+  // Version Selectors with C6 font sizes (17px)
+  const olderSelect = h("select", {
+    id: "version-from-select",
+    className: "version-select",
+    style: { "font-size": "17px", "padding": "8px 14px", "min-height": "44px" },
+    "aria-label": "Select baseline comparison version",
+  });
 
-  // Inline validation notice (replaces native alert())
+  const newerSelect = h("select", {
+    id: "version-to-select",
+    className: "version-select",
+    style: { "font-size": "17px", "padding": "8px 14px", "min-height": "44px" },
+    "aria-label": "Select target comparison version",
+  });
+
+  // Validation feedback banner
   const validationNotice = h("div", {
-    className: "version-validation-notice is-hidden",
+    className: "version-validation-notice",
+    role: "alert",
+    "aria-live": "polite",
+    style: { display: "none" },
   });
 
   function showNotice(msg) {
     validationNotice.textContent = msg;
-    validationNotice.classList.remove("is-hidden");
+    validationNotice.style.display = "block";
   }
 
   function hideNotice() {
-    validationNotice.classList.add("is-hidden");
     validationNotice.textContent = "";
+    validationNotice.style.display = "none";
   }
 
   function populateOptions() {
@@ -122,47 +142,40 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
     newerSelect.replaceChildren();
 
     versionsList.forEach((v) => {
-      // In older select: cannot be newer than or equal to current newer
-      const isOlderDisabled = compareSemver(v.version, lastValidNewer) >= 0;
-      const optOld = h(
-        "option",
-        {
-          value: v.version,
-          disabled: isOlderDisabled,
-        },
-        v.version + (v.is_suspicious ? " ⚠️ (rev)" : "")
-      );
-      if (v.version === lastValidOlder) optOld.selected = true;
-      olderSelect.appendChild(optOld);
+      const optFrom = h("option", { value: v.version }, `v${v.version}`);
+      if (v.version === lastValidOlder) optFrom.selected = true;
+      if (v.version === lastValidNewer) {
+        optFrom.disabled = true;
+      }
+      olderSelect.appendChild(optFrom);
 
-      // In newer select: cannot be older than or equal to current older
-      const isNewerDisabled = compareSemver(v.version, lastValidOlder) <= 0;
-      const optNew = h(
-        "option",
-        {
-          value: v.version,
-          disabled: isNewerDisabled,
-        },
-        v.version + (v.is_suspicious ? " ⚠️ (rev)" : "")
-      );
-      if (v.version === lastValidNewer) optNew.selected = true;
-      newerSelect.appendChild(optNew);
+      const optTo = h("option", { value: v.version }, `v${v.version}`);
+      if (v.version === lastValidNewer) optTo.selected = true;
+      if (v.version === lastValidOlder) {
+        optTo.disabled = true;
+      }
+      newerSelect.appendChild(optTo);
     });
   }
 
   populateOptions();
 
-  olderSelect.addEventListener("change", () => {
-    const fromVal = olderSelect.value;
-    const toVal = lastValidNewer;
+  olderSelect.addEventListener("change", (e) => {
+    const fromVal = e.target.value;
+    const toVal = newerSelect.value;
 
-    if (fromVal === toVal || compareSemver(fromVal, toVal) >= 0) {
-      showNotice("Older version must be an earlier version than newer version. Selection reverted.");
-      olderSelect.value = lastValidOlder;
+    if (fromVal === toVal) {
+      showNotice("Select two different versions to compare.");
+      e.target.value = lastValidOlder;
       return;
     }
 
-    hideNotice();
+    if (compareSemver(fromVal, toVal) > 0) {
+      showNotice(`Baseline (v${fromVal}) is newer than target (v${toVal}). Inverted comparison.`);
+    } else {
+      hideNotice();
+    }
+
     lastValidOlder = fromVal;
     populateOptions();
     if (typeof onVersionChange === "function") {
@@ -170,13 +183,13 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
     }
   });
 
-  newerSelect.addEventListener("change", () => {
-    const fromVal = lastValidOlder;
-    const toVal = newerSelect.value;
+  newerSelect.addEventListener("change", (e) => {
+    const toVal = e.target.value;
+    const fromVal = olderSelect.value;
 
-    if (fromVal === toVal || compareSemver(fromVal, toVal) >= 0) {
-      showNotice("Newer version must be a later version than older version. Selection reverted.");
-      newerSelect.value = lastValidNewer;
+    if (toVal === fromVal) {
+      showNotice("Select two different versions to compare.");
+      e.target.value = lastValidNewer;
       return;
     }
 
@@ -190,9 +203,9 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
 
   const selectorsRow = h(
     "div",
-    { className: "version-selectors" },
+    { className: "version-selectors", style: { "display": "flex", "align-items": "center", "gap": "14px", "margin-bottom": "var(--s-3)" } },
     olderSelect,
-    h("span", { className: "version-arrow", style: { "color": "var(--text-muted)" } }, "->"),
+    h("span", { className: "version-arrow", style: { "color": "var(--text-muted)", "font-size": "18px" } }, "→"),
     newerSelect
   );
 
@@ -215,19 +228,20 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
     const totalRetained = apiRetained.length + hostRetained.length;
     const totalBroadened = hostBroadened.length;
 
-    // Summary Line
+    // Summary Line (C6: 18px text, 20px bold risk score)
     const summaryLine = h(
       "div",
       {
         style: {
-          "font-size": "var(--text-sm)",
-          "font-weight": "600",
+          "font-size": "18px",
+          "font-weight": "500",
           "color": "var(--text)",
           "display": "flex",
           "justify-content": "space-between",
+          "align-items": "center",
           "flex-wrap": "wrap",
           "gap": "var(--s-2)",
-          "padding": "var(--s-2) 0",
+          "padding": "var(--s-3) 0",
           "border-bottom": "1px solid var(--border)",
         },
       },
@@ -236,39 +250,39 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
         null,
         `${totalAdded} added, ${totalRemoved} removed, ${totalRetained} retained, ${totalBroadened} broadened`
       ),
-      h("span", { className: "mono" }, `Risk score ${comp.score_from} -> ${comp.score_to}`)
+      h("span", { className: "mono", style: { "font-size": "20px", "font-weight": "700", "color": "var(--accent-text)" } }, `Risk score ${comp.score_from} → ${comp.score_to}`)
     );
 
     panel.appendChild(summaryLine);
 
-    // Plain-Language Overview Card for Non-Technical Audiences
+    // Plain-Language Overview Card (C6: 22px title, 17px bullets)
     const scoreDiff = comp.score_to - comp.score_from;
     let scoreTrendText = "Exposure score remained constant.";
     let trendColor = "var(--text-muted)";
     if (scoreDiff > 0) {
-      scoreTrendText = `Permission exposure increased by +${scoreDiff} points (Risk score: ${comp.score_from} -> ${comp.score_to})`;
+      scoreTrendText = `Permission exposure increased by +${scoreDiff} points (Risk score: ${comp.score_from} → ${comp.score_to})`;
       trendColor = "var(--risk-high)";
     } else if (scoreDiff < 0) {
-      scoreTrendText = `Permission exposure decreased by ${Math.abs(scoreDiff)} points (Risk score: ${comp.score_from} -> ${comp.score_to})`;
+      scoreTrendText = `Permission exposure decreased by ${Math.abs(scoreDiff)} points (Risk score: ${comp.score_from} → ${comp.score_to})`;
       trendColor = "var(--risk-low)";
     }
 
     const overviewCard = h(
       "div",
-      { className: "version-overview-card" },
+      { className: "version-overview-card", style: { "margin-top": "var(--s-3)" } },
       h(
         "div",
-        { className: "version-overview-title" },
-        h("strong", null, `What Changed from v${currentFrom} to v${currentTo}?`)
+        { className: "version-overview-title", style: { "font-size": "22px", "font-weight": "700", "color": "var(--text)", "margin-bottom": "6px" } },
+        `What Changed from v${currentFrom} to v${currentTo}?`
       ),
       h(
         "div",
-        { className: "version-overview-trend", style: { "color": trendColor } },
+        { className: "version-overview-trend", style: { "color": trendColor, "font-size": "17px", "font-weight": "600", "margin-bottom": "10px" } },
         scoreTrendText
       )
     );
 
-    const changesList = h("ul", { className: "version-overview-list" });
+    const changesList = h("ul", { className: "version-overview-list", style: { "font-size": "17px", "line-height": "1.5", "display": "flex", "flex-direction": "column", "gap": "8px" } });
 
     if (totalAdded > 0) {
       const addedNames = [...apiAdded.map((a) => a.name), ...hostAdded.map((h) => h.name)].join(", ");
@@ -278,7 +292,7 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
           null,
           h("strong", null, "New Capabilities Added: "),
           `This update introduces ${totalAdded} new permission(s): `,
-          h("span", { className: "mono" }, addedNames),
+          h("span", { className: "mono", style: { "color": "var(--accent-text)" } }, addedNames),
           ". Review is suggested to verify that these new powers align with the extension's stated purpose."
         )
       );
@@ -319,10 +333,10 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
     overviewCard.appendChild(changesList);
     panel.appendChild(overviewCard);
 
-    // Helper to render diff items
+    // Group Diff Rows (C6: 18px mono rows with 14px badges)
     function renderGroupDiff(title, group, broadened = []) {
-      const cont = h("div", { style: { "display": "flex", "flex-direction": "column", "gap": "var(--s-2)" } });
-      cont.appendChild(h("h4", { className: "section-label" }, title));
+      const cont = h("div", { style: { "display": "flex", "flex-direction": "column", "gap": "var(--s-2)", "margin-top": "var(--s-3)" } });
+      cont.appendChild(h("h4", { className: "section-label", style: { "font-size": "14px" } }, title));
 
       // 1. Added
       for (const item of group.added || []) {
@@ -332,9 +346,9 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
         cont.appendChild(
           h(
             "div",
-            { className: "diff-row diff-added" },
-            h("span", { dir: "auto" }, `+ ${item.name}`),
-            h("span", { className: chipClass }, tagText)
+            { className: "diff-row diff-added", style: { "font-size": "18px", "padding": "12px 16px" } },
+            h("span", { className: "mono", dir: "auto" }, `+ ${item.name}`),
+            h("span", { className: chipClass, style: { "font-size": "14px" } }, tagText)
           )
         );
       }
@@ -342,19 +356,19 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
       // 2. Broadened
       for (const b of broadened) {
         const broadenedCol = h("div", { style: { "display": "flex", "flex-direction": "column", "gap": "2px" } },
-          h("span", { dir: "auto" }, `${b.from_pattern} -> ${b.to_pattern}`)
+          h("span", { className: "mono", dir: "auto" }, `${b.from_pattern} → ${b.to_pattern}`)
         );
         if (b.explanation) {
           broadenedCol.appendChild(
-            h("span", { style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "font-weight": "normal", "font-family": "system-ui, sans-serif" } }, b.explanation)
+            h("span", { style: { "font-size": "15px", "color": "var(--text-muted)", "font-weight": "normal", "font-family": "system-ui, sans-serif" } }, b.explanation)
           );
         }
         cont.appendChild(
           h(
             "div",
-            { className: "diff-row diff-broadened" },
+            { className: "diff-row diff-broadened", style: { "font-size": "18px", "padding": "12px 16px" } },
             broadenedCol,
-            h("span", { className: "chip chip-high" }, "Broadened Scope")
+            h("span", { className: "chip chip-high", style: { "font-size": "14px" } }, "Broadened Scope")
           )
         );
       }
@@ -364,9 +378,9 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
         cont.appendChild(
           h(
             "div",
-            { className: "diff-row diff-retained" },
-            h("span", { dir: "auto" }, h("span", { className: "retained-dot" }), item.name),
-            h("span", { style: { "color": "var(--text-muted)", "font-size": "var(--text-xs)" } }, "Retained")
+            { className: "diff-row diff-retained", style: { "font-size": "18px", "padding": "12px 16px" } },
+            h("span", { className: "mono", dir: "auto" }, h("span", { className: "retained-dot" }), item.name),
+            h("span", { style: { "color": "var(--text-muted)", "font-size": "14px" } }, "Retained")
           )
         );
       }
@@ -376,9 +390,9 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
         cont.appendChild(
           h(
             "div",
-            { className: "diff-row diff-removed" },
-            h("span", { dir: "auto" }, `- ${item.name}`),
-            h("span", { style: { "color": "var(--text-muted)", "font-size": "var(--text-xs)" } }, "Removed")
+            { className: "diff-row diff-removed", style: { "font-size": "18px", "padding": "12px 16px" } },
+            h("span", { className: "mono", dir: "auto" }, `- ${item.name}`),
+            h("span", { style: { "color": "var(--text-muted)", "font-size": "14px" } }, "Removed")
           )
         );
       }
@@ -394,7 +408,7 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
     }
   }
 
-  // Render Version History Timeline
+  // Render Version History Timeline Table (C6: 14px caps header, 17px rows, 20px risk numbers)
   renderVersionHistoryTimeline(panel, versionsList, (olderV, newerV) => {
     lastValidOlder = olderV;
     lastValidNewer = newerV;
@@ -409,13 +423,13 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
 }
 
 /**
- * Renders an append-only Version History Timeline table with captured dates,
- * risk scores, suspicious indicators, and a "What changed?" drill-down action (Milestone 1c).
+ * Renders an append-only Version History Timeline table.
+ * C6: Header 14px caps, rows 17px, risk numbers 20px.
  */
 function renderVersionHistoryTimeline(container, versionsList, onDiffClick) {
-  const timelineCont = h("div", { className: "version-timeline" });
+  const timelineCont = h("div", { className: "version-timeline", style: { "margin-top": "var(--s-4)" } });
   timelineCont.appendChild(
-    h("h4", { className: "section-label", style: { "margin-bottom": "var(--s-2)" } }, "Version History Timeline")
+    h("h4", { className: "section-label", style: { "font-size": "14px", "margin-bottom": "var(--s-2)" } }, "Version History Timeline")
   );
 
   const table = h(
@@ -427,10 +441,10 @@ function renderVersionHistoryTimeline(container, versionsList, onDiffClick) {
       h(
         "tr",
         null,
-        h("th", null, "Version"),
-        h("th", null, "Captured"),
-        h("th", null, "Assessed Risk"),
-        h("th", null, "Action")
+        h("th", { style: { "font-size": "14px", "text-transform": "uppercase", "letter-spacing": "0.05em" } }, "Version"),
+        h("th", { style: { "font-size": "14px", "text-transform": "uppercase", "letter-spacing": "0.05em" } }, "Captured"),
+        h("th", { style: { "font-size": "14px", "text-transform": "uppercase", "letter-spacing": "0.05em" } }, "Assessed Risk"),
+        h("th", { style: { "font-size": "14px", "text-transform": "uppercase", "letter-spacing": "0.05em" } }, "Action")
       )
     )
   );
@@ -443,23 +457,23 @@ function renderVersionHistoryTimeline(container, versionsList, onDiffClick) {
 
     const versionCol = h(
       "td",
-      null,
+      { style: { "font-size": "17px" } },
       h("span", { className: "mono", style: { "font-weight": "600", "color": "var(--text)" } }, v.version),
-      isLatest ? h("span", { className: "chip", style: { "margin-left": "var(--s-2)", "background": "rgba(37,99,235,0.2)", "color": "var(--accent-text)" } }, "Latest") : null,
-      v.is_suspicious ? h("span", { className: "chip chip-high", style: { "margin-left": "var(--s-2)" } }, "Hash Mismatch") : null
+      isLatest ? h("span", { className: "chip", style: { "margin-left": "var(--s-2)", "background": "rgba(37,99,235,0.2)", "color": "var(--accent-text)", "font-size": "12px" } }, "Latest") : null,
+      v.is_suspicious ? h("span", { className: "chip chip-high", style: { "margin-left": "var(--s-2)", "font-size": "12px" } }, "Hash Mismatch") : null
     );
 
     const dateStr = v.released || (v.captured_at ? v.captured_at.slice(0, 10) : "Recorded");
-    const dateCol = h("td", { style: { "color": "var(--text-muted)" } }, dateStr);
+    const dateCol = h("td", { style: { "color": "var(--text-muted)", "font-size": "17px" } }, dateStr);
 
     const score = v.risk_score !== undefined ? v.risk_score : 0;
     const level = scoreToLevel(score);
     const color = scoreColor(score);
     const scoreCol = h(
       "td",
-      null,
-      h("span", { className: "mono", style: { "color": color, "font-weight": "600" } }, `${score} `),
-      h("span", { style: { "font-size": "10px", "text-transform": "uppercase", "color": color } }, `[${level}]`)
+      { style: { "font-size": "17px" } },
+      h("span", { className: "mono", style: { "color": color, "font-size": "20px", "font-weight": "700" } }, `${score} `),
+      h("span", { style: { "font-size": "13px", "text-transform": "uppercase", "color": color, "font-weight": "600" } }, `[${level}]`)
     );
 
     const actionCol = h("td", null);
@@ -469,6 +483,7 @@ function renderVersionHistoryTimeline(container, versionsList, onDiffClick) {
         {
           type: "button",
           className: "timeline-btn-diff",
+          style: { "font-size": "15px", "padding": "6px 12px" },
           title: `Compare v${olderVersion} to v${v.version}`,
         },
         "What changed?"
@@ -479,7 +494,7 @@ function renderVersionHistoryTimeline(container, versionsList, onDiffClick) {
       actionCol.appendChild(diffBtn);
     } else {
       actionCol.appendChild(
-        h("span", { style: { "color": "var(--text-muted)", "font-style": "italic", "font-size": "var(--text-xs)" } }, "Baseline")
+        h("span", { style: { "color": "var(--text-muted)", "font-style": "italic", "font-size": "14px" } }, "Baseline")
       );
     }
 

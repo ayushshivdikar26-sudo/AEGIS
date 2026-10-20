@@ -1,35 +1,22 @@
 /**
- * AEGIS Risk Gauge Renderer (render/gauge.js)
- * Implements SVG speedometer with flat arcs, animated needle, number counting,
- * top-3 contributors, and explainability calculations disclosure (Part 1 s7.2, FR-F3, FR-E2).
+ * AEGIS Risk Gauge & Risk Assessment Renderer (render/gauge.js)
+ * Implements:
+ *  - Row 1 Right Card: Centered speedometer gauge, score / 100, level chip, and disclaimer (Part C5).
+ *  - Row 2 Card: "Risk assessment" heading, 2-column container card with explanation, plain summary,
+ *    main risk contributors, calculation disclosure, and bottom excess score strip (Part C5).
  */
 
 import { h } from "../dom.js";
 import { arcPath, scoreToAngle, scoreToLevel } from "../lib/risk.js";
 
-export function renderGauge(assessmentData) {
-  const panel = h("section", {
-    id: "gauge-section",
-    className: "panel",
-    "aria-labelledby": "gauge-heading",
-  });
-
-  const assess = assessmentData || {};
-  const score = assess.risk_score || 0;
-  const level = assess.risk_level || scoreToLevel(score);
-  const thresholds = assess.thresholds || { low_max: 34, mid_max: 69 };
-
-  // Section Heading
-  panel.appendChild(
-    h("div", { className: "section-label", id: "gauge-heading" }, "Risk Assessment")
-  );
-
-  // SVG Gauge Semicircle with smooth gradient
+/**
+ * Builds the SVG speedometer element.
+ */
+function createSpeedometerSVG(score) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 240 140");
   svg.setAttribute("class", "gauge-svg");
 
-  // Linear Gradient definition across semicircle
   const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
   const grad = document.createElementNS("http://www.w3.org/2000/svg", "linearGradient");
   grad.setAttribute("id", "gauge-gradient");
@@ -73,7 +60,7 @@ export function renderGauge(assessmentData) {
   arcGrad.setAttribute("fill", "none");
   svg.appendChild(arcGrad);
 
-  // Needle: line from center (120, 120) pointing up
+  // Needle
   const needleGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
   needleGroup.setAttribute("class", "gauge-needle");
   needleGroup.style.setProperty("--needle", `${scoreToAngle(score)}deg`);
@@ -97,7 +84,7 @@ export function renderGauge(assessmentData) {
   needleGroup.appendChild(centerCap);
 
   // Tick labels
-  const textProps = { fill: "var(--text-muted)", "font-size": "10", "font-family": "IBM Plex Mono" };
+  const textProps = { fill: "var(--text-muted)", "font-size": "11", "font-family": "IBM Plex Mono, monospace" };
   const tick0 = document.createElementNS("http://www.w3.org/2000/svg", "text");
   tick0.setAttribute("x", "12");
   tick0.setAttribute("y", "136");
@@ -105,7 +92,7 @@ export function renderGauge(assessmentData) {
   tick0.textContent = "0";
 
   const tick100 = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  tick100.setAttribute("x", "210");
+  tick100.setAttribute("x", "208");
   tick100.setAttribute("y", "136");
   for (const [k, v] of Object.entries(textProps)) tick100.setAttribute(k, v);
   tick100.textContent = "100";
@@ -114,13 +101,30 @@ export function renderGauge(assessmentData) {
   svg.appendChild(tick0);
   svg.appendChild(tick100);
 
+  return svg;
+}
+
+/**
+ * Renders Row 1 Right Card: Centered Risk Gauge.
+ */
+export function renderGauge(assessmentData) {
+  const panel = h("section", {
+    id: "gauge-section",
+    className: "panel gauge-card",
+    "aria-labelledby": "gauge-heading",
+  });
+
+  const assess = assessmentData || {};
+  const score = assess.risk_score || 0;
+  const level = assess.risk_level || scoreToLevel(score);
+
+  const svg = createSpeedometerSVG(score);
+
   // Number counting element
   const scoreNumSpan = h("span", { id: "gauge-score-num" }, String(score));
 
-  // Reduced motion check
   const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (!prefersReduced) {
-    let current = 0;
     const duration = 1000;
     const start = performance.now();
     function animateScore(now) {
@@ -155,8 +159,35 @@ export function renderGauge(assessmentData) {
   );
 
   panel.appendChild(gaugeWrapper);
+  return panel;
+}
 
-  // Non-technical Plain-Language Guidance Card
+/**
+ * Renders Row 2: Section Heading "Risk assessment" + Container Card with 2 columns.
+ */
+export function renderRiskAssessment(assessmentData) {
+  const container = h("div", { className: "risk-assessment-section-wrapper" });
+
+  // 1. Plain section heading above the card
+  container.appendChild(
+    h("h2", { className: "dashboard-section-heading" }, "Risk assessment")
+  );
+
+  const assess = assessmentData || {};
+  const level = assess.risk_level || scoreToLevel(assess.risk_score || 0);
+
+  // 2. Container Card
+  const card = h("section", {
+    id: "risk-assessment-card",
+    className: "panel risk-assessment-card",
+  });
+
+  // Top Grid: 2 Columns
+  const grid = h("div", { className: "risk-assessment-grid" });
+
+  // Column 1 (Left): Two stacked boxes
+  const leftCol = h("div", { className: "risk-col-left" });
+
   let levelTitle = "Routine Exposure";
   let levelDesc = "This extension requests standard capabilities needed for basic tasks with minimal data exposure.";
   let levelColor = "var(--risk-low)";
@@ -171,9 +202,10 @@ export function renderGauge(assessmentData) {
     levelColor = "var(--risk-high)";
   }
 
-  const plainGuideCard = h(
+  // Box 1: Understanding This Score
+  const explanationBox = h(
     "div",
-    { className: "risk-explanation-card" },
+    { className: "risk-explanation-box" },
     h(
       "div",
       { className: "risk-card-header" },
@@ -187,101 +219,56 @@ export function renderGauge(assessmentData) {
       "Objective audit note: This score measures declared capability and exposure scope. It does not imply malicious intent."
     )
   );
-  panel.appendChild(plainGuideCard);
+  leftCol.appendChild(explanationBox);
 
-  // Plain-Language Summary (FR-E9)
+  // Box 2: Plain-language summary sentence
   if (assess.plain_summary) {
-    panel.appendChild(
-      h(
-        "div",
-        {
-          style: {
-            "padding": "var(--s-3)",
-            "background-color": "var(--surface-2)",
-            "border-radius": "var(--radius)",
-            "font-size": "var(--text-sm)",
-            "color": "var(--text)",
-          },
-        },
-        assess.plain_summary
-      )
+    const summaryBox = h(
+      "div",
+      { className: "risk-summary-box" },
+      h("div", { className: "risk-summary-label" }, "Summary Assessment"),
+      h("p", { className: "risk-summary-text", dir: "auto" }, assess.plain_summary)
     );
+    leftCol.appendChild(summaryBox);
   }
+  grid.appendChild(leftCol);
 
-  // Excess Score & Evidence Coverage (FR-E1, PRD s4.5)
-  if (assess.excess_score !== undefined || assess.evidence_coverage !== undefined) {
-    const excessBox = h("div", {
-      className: "excess-score-box",
-      style: {
-        "display": "flex",
-        "justify-content": "space-between",
-        "align-items": "center",
-        "padding": "var(--s-2) var(--s-3)",
-        "background-color": "var(--surface-2)",
-        "border-radius": "var(--radius)",
-        "font-size": "var(--text-xs)",
-        "color": "var(--text-muted)",
-        "margin-top": "var(--s-2)",
-      },
-    });
+  // Column 2 (Right): Main risk contributors box + Calculation disclosure button
+  const rightCol = h("div", { className: "risk-col-right" });
 
-    const excessVal =
-      assess.excess_score !== null && assess.excess_score !== undefined
-        ? `${assess.excess_score} / 100`
-        : "Not enough evidence to estimate";
+  const contribBox = h("div", { className: "risk-contributors-box" });
+  contribBox.appendChild(
+    h("div", { className: "contributors-header" }, "Main risk contributors")
+  );
 
-    excessBox.appendChild(
-      h(
-        "div",
-        null,
-        h("span", { style: { "font-weight": "600", "color": "var(--text)" } }, "Excess score: "),
-        h("span", { className: "mono" }, excessVal)
-      )
-    );
-
-    if (assess.evidence_coverage !== undefined && assess.evidence_coverage !== null) {
-      excessBox.appendChild(
-        h(
-          "div",
-          null,
-          h("span", { style: { "font-weight": "600", "color": "var(--text)" } }, "Evidence coverage: "),
-          h("span", { className: "mono" }, `${Math.round(assess.evidence_coverage * 100)}%`)
-        )
-      );
-    }
-
-    panel.appendChild(excessBox);
-  }
-
-  // Top 3 Breakdown Contributors
-  if (assess.breakdown && assess.breakdown.length > 0) {
-    const top3 = assess.breakdown.slice(0, 3);
+  const top3 = (assess.breakdown || []).slice(0, 3);
+  if (top3.length > 0) {
     const contribList = h("div", { className: "contributors-list" });
-    contribList.appendChild(
-      h("div", { className: "section-label" }, "Main Risk Contributors")
-    );
-
     for (const item of top3) {
       contribList.appendChild(
         h(
           "div",
           { className: "contributor-item" },
-          h("span", { className: "mono" }, item.label),
-          h("span", { className: "mono" }, `+${item.contribution.toFixed(1)}`)
+          h("span", { className: "mono contributor-label" }, item.label),
+          h("span", { className: "mono contributor-value" }, `+${item.contribution.toFixed(1)}`)
         )
       );
     }
-
-    panel.appendChild(contribList);
+    contribBox.appendChild(contribList);
+  } else {
+    contribBox.appendChild(
+      h("div", { className: "contributor-empty" }, "No individual risk contributors.")
+    );
   }
+  rightCol.appendChild(contribBox);
 
-  // "How this score is calculated" Disclosure (FR-E2)
+  // Calculation disclosure link/button
   if (assess.calculation && assess.calculation.length > 0) {
     const disclosureBtn = h(
       "button",
       {
         type: "button",
-        className: "disclosure-btn",
+        className: "calc-disclosure-btn",
         "aria-expanded": "false",
       },
       "How this score is calculated"
@@ -296,11 +283,11 @@ export function renderGauge(assessmentData) {
       stepsContainer.appendChild(
         h(
           "div",
-          null,
-          h("span", { className: "mono", style: { "font-weight": "600", "color": "var(--text)" } }, `${step.step}: `),
+          { className: "calc-step-row" },
+          h("span", { className: "mono calc-step-name" }, `${step.step}: `),
           h("span", null, `${step.formula} = `),
           h("span", { className: "mono" }, `${step.values} -> `),
-          h("span", { className: "mono", style: { "color": "var(--accent-text)" } }, step.result)
+          h("span", { className: "mono calc-step-res" }, step.result)
         )
       );
     }
@@ -311,9 +298,41 @@ export function renderGauge(assessmentData) {
       stepsContainer.style.setProperty("display", isExpanded ? "none" : "flex");
     });
 
-    panel.appendChild(disclosureBtn);
-    panel.appendChild(stepsContainer);
+    rightCol.appendChild(disclosureBtn);
+    rightCol.appendChild(stepsContainer);
+  }
+  grid.appendChild(rightCol);
+
+  card.appendChild(grid);
+
+  // Full-width Bottom Strip: Excess Score / Evidence Coverage
+  if (assess.excess_score !== undefined || assess.evidence_coverage !== undefined) {
+    const excessVal =
+      assess.excess_score !== null && assess.excess_score !== undefined
+        ? `${assess.excess_score} / 100`
+        : "Not enough evidence to estimate";
+
+    const strip = h(
+      "div",
+      { className: "excess-score-strip" },
+      h(
+        "div",
+        { className: "strip-item" },
+        h("span", { className: "strip-label" }, "Excess score: "),
+        h("span", { className: "mono strip-value" }, excessVal)
+      ),
+      assess.evidence_coverage !== undefined && assess.evidence_coverage !== null
+        ? h(
+            "div",
+            { className: "strip-item" },
+            h("span", { className: "strip-label" }, "Evidence coverage: "),
+            h("span", { className: "mono strip-value" }, `${Math.round(assess.evidence_coverage * 100)}%`)
+          )
+        : null
+    );
+    card.appendChild(strip);
   }
 
-  return panel;
+  container.appendChild(card);
+  return container;
 }

@@ -1,36 +1,34 @@
 /**
- * AEGIS Permissions Accordion Renderer (render/permissions.js)
- * Visually segregates API, Host, and Optional permissions with expandable details (Part 1 s7.4, FR-F5).
+ * AEGIS Permissions Section Renderer (render/permissions.js)
+ * Implements categorised accordion (API, Host, Optional) with weights,
+ * plain-language decision explanations (without internal rule IDs - C7),
+ * and enhanced typography tokens (C6).
  */
 
 import { h } from "../dom.js";
 
 function humanStatus(status) {
   switch (status) {
-    case "justified":
-      return { text: "Purpose Aligned", class: "chip-low" };
-    case "needs_review":
-      return { text: "Review Recommended", class: "chip-mid" };
-    case "potentially_excessive":
-      return { text: "Broad Website Access", class: "chip-high" };
-    case "flagged":
-      return { text: "Elevated Capability", class: "chip-high" };
-    case "optional":
-      return { text: "User-Granted", class: "chip-mid" };
+    case "certain_positive":
+      return { text: "PURPOSE ALIGNED", class: "chip-low" };
+    case "uncertain":
+      return { text: "UNCERTAIN ALIGNMENT", class: "chip-mid" };
+    case "certain_negative":
+      return { text: "EXCESS CAPABILITY", class: "chip-high" };
     default:
-      return { text: "Uncertain Alignment", class: "chip-mid" };
+      return { text: "EVALUATING", class: "chip-neutral" };
   }
 }
 
 function renderPermissionGroup(title, subtitle, items, groupKey) {
   const group = h("div", { className: "perm-group" });
-  const count = items.length;
+  const count = items ? items.length : 0;
 
   const headerBox = h(
     "div",
-    { style: { "margin-bottom": "var(--s-1)" } },
-    h("h3", { className: "section-label", style: { "margin-bottom": "2px" } }, `${title} (${count})`),
-    h("p", { style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "margin": "0" } }, subtitle)
+    { style: { "margin-bottom": "var(--s-1)", "margin-top": "var(--s-2)" } },
+    h("h3", { className: "section-label", style: { "font-size": "14px", "margin-bottom": "4px" } }, `${title} (${count})`),
+    h("p", { style: { "font-size": "14px", "color": "var(--text-muted)", "margin": "0" } }, subtitle)
   );
   group.appendChild(headerBox);
 
@@ -42,7 +40,7 @@ function renderPermissionGroup(title, subtitle, items, groupKey) {
           style: {
             "padding": "var(--s-3)",
             "color": "var(--text-muted)",
-            "font-size": "var(--text-xs)",
+            "font-size": "14px",
             "font-style": "italic",
           },
         },
@@ -60,21 +58,24 @@ function renderPermissionGroup(title, subtitle, items, groupKey) {
     return a.name.localeCompare(b.name);
   });
 
+  const isHostGroup = groupKey === "host";
+
   sortedItems.forEach((perm, idx) => {
     const detailId = `perm-detail-${groupKey}-${idx}`;
     const riskWord = (perm.risk_label || "low").toUpperCase();
     const statusMeta = humanStatus(perm.status);
 
+    const nameSize = isHostGroup ? "17px" : "19px";
     const nameRow = h(
       "div",
       { style: { "display": "flex", "align-items": "center", "gap": "var(--s-2)", "flex-wrap": "wrap" } },
-      h("span", { className: "perm-name", dir: "auto" }, perm.name),
-      h("span", { className: `chip ${statusMeta.class}`, style: { "font-size": "10px", "padding": "1px 6px" } }, statusMeta.text)
+      h("span", { className: "perm-name", style: { "font-size": nameSize }, dir: "auto" }, perm.name),
+      h("span", { className: `chip ${statusMeta.class}`, style: { "font-size": "13px", "padding": "2px 8px" } }, statusMeta.text)
     );
 
     const descRow = h(
       "div",
-      { className: "perm-plain-desc", style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "margin-top": "2px" } },
+      { className: "perm-plain-desc", style: { "font-size": "16px", "color": "var(--text-muted)", "margin-top": "4px" } },
       perm.allows || "Standard browser access."
     );
 
@@ -82,71 +83,69 @@ function renderPermissionGroup(title, subtitle, items, groupKey) {
       "div",
       { className: "perm-row-summary" },
       h("div", { className: "perm-name-status" }, nameRow, descRow),
-      h("span", { className: `chip chip-${perm.risk_label || "low"}` }, riskWord)
+      h("span", { className: `chip chip-${perm.risk_label || "low"}`, style: { "font-size": "14px", "font-weight": "700" } }, riskWord)
     );
 
     const detailsInner = h(
       "div",
-      { className: "perm-details-inner" },
+      { className: "perm-details-inner", style: { "font-size": "16px" } },
       // What it allows
-      h("div", { className: "perm-block-label" }, "What it allows"),
-      h("div", null, perm.allows || "No specific capability description available."),
+      h("div", { className: "perm-block-label", style: { "font-size": "14px" } }, "What it allows"),
+      h("div", { style: { "font-size": "16px", "color": "var(--text)" } }, perm.allows || "No specific capability description available."),
       // Why an extension might need it
-      h("div", { className: "perm-block-label" }, "Why an extension might need it"),
-      h("div", null, perm.legitimate_use || "General extension functionality.")
+      h("div", { className: "perm-block-label", style: { "font-size": "14px" } }, "Why an extension might need it"),
+      h("div", { style: { "font-size": "16px", "color": "var(--text)" } }, perm.legitimate_use || "General extension functionality.")
     );
 
-    // How this was decided (FR-E1)
-    const decisionBlock = h("div", {
-      className: "perm-decision-block",
-      style: {
-        "margin-top": "var(--s-2)",
-        "padding-top": "var(--s-2)",
-        "border-top": "1px solid var(--border)",
-      },
-    });
-    decisionBlock.appendChild(
-      h("div", { className: "perm-block-label" }, "How this was decided")
-    );
-
-    const ruleReasonRow = h("div", {
-      style: {
-        "display": "flex",
-        "align-items": "baseline",
-        "gap": "var(--s-2)",
-        "margin-bottom": "var(--s-1)",
-      },
-    });
-    if (perm.rule_id) {
-      ruleReasonRow.appendChild(
-        h("span", { className: "chip chip-rule" }, `Rule ${perm.rule_id}`)
-      );
-    }
+    // How this was decided (C7: NO RULE IDs, plain-language full-width explanation at 16px)
     const explanationText = perm.reason || perm.assessment || "";
-    if (explanationText) {
-      ruleReasonRow.appendChild(
-        h("span", { style: { "font-size": "var(--text-xs)", "color": "var(--text)" } }, explanationText)
-      );
-    }
-    if (perm.rule_id || explanationText) {
-      decisionBlock.appendChild(ruleReasonRow);
-    }
-
-    if (perm.evidence && perm.evidence.length > 0) {
-      const evList = h("ul", {
+    if (explanationText || (perm.evidence && perm.evidence.length > 0)) {
+      const decisionBlock = h("div", {
+        className: "perm-decision-block",
         style: {
-          "padding-left": "var(--s-4)",
-          "margin-top": "var(--s-1)",
-          "font-size": "var(--text-xs)",
-          "color": "var(--text-muted)",
+          "margin-top": "var(--s-3)",
+          "padding-top": "var(--s-3)",
+          "border-top": "1px solid var(--border)",
         },
       });
-      for (const ev of perm.evidence) {
-        evList.appendChild(h("li", null, ev));
+      decisionBlock.appendChild(
+        h("div", { className: "perm-block-label", style: { "font-size": "14px", "margin-bottom": "var(--s-2)" } }, "How this was decided")
+      );
+
+      if (explanationText) {
+        decisionBlock.appendChild(
+          h(
+            "p",
+            {
+              className: "perm-decision-text",
+              style: {
+                "font-size": "16px",
+                "color": "var(--text)",
+                "line-height": "1.5",
+                "margin-bottom": "var(--s-2)",
+              },
+            },
+            explanationText
+          )
+        );
       }
-      decisionBlock.appendChild(evList);
+
+      if (perm.evidence && perm.evidence.length > 0) {
+        const evList = h("ul", {
+          style: {
+            "padding-left": "var(--s-4)",
+            "margin-top": "var(--s-1)",
+            "font-size": "15px",
+            "color": "var(--text-muted)",
+          },
+        });
+        for (const ev of perm.evidence) {
+          evList.appendChild(h("li", null, ev));
+        }
+        decisionBlock.appendChild(evList);
+      }
+      detailsInner.appendChild(decisionBlock);
     }
-    detailsInner.appendChild(decisionBlock);
 
     // Narrower Alternative
     if (perm.narrower_alternative) {
@@ -155,24 +154,24 @@ function renderPermissionGroup(title, subtitle, items, groupKey) {
           "div",
           {
             style: {
-              "margin-top": "var(--s-2)",
-              "font-size": "var(--text-xs)",
+              "margin-top": "var(--s-3)",
+              "font-size": "15px",
               "color": "var(--accent-text)",
             },
           },
-          h("span", { style: { "font-weight": "600" } }, "Narrower alternative: "),
+          h("span", { style: { "font-weight": "600" } }, "Documented narrower alternative: "),
           h("span", { className: "mono" }, perm.narrower_alternative)
         )
       );
     }
 
-    // Source link & Review flag
+    // Documentation Link & Review Flag
     const metaFooter = h("div", {
       style: {
         "display": "flex",
         "gap": "var(--s-3)",
-        "margin-top": "var(--s-2)",
-        "font-size": "11px",
+        "margin-top": "var(--s-3)",
+        "font-size": "14px",
       },
     });
 
@@ -214,6 +213,7 @@ function renderPermissionGroup(title, subtitle, items, groupKey) {
       {
         type: "button",
         className: "perm-row-btn",
+        style: { "padding": "16px 20px" },
         "aria-expanded": "false",
         "aria-controls": detailId,
       },

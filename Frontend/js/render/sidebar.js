@@ -1,6 +1,6 @@
 /**
  * AEGIS Sidebar Renderer (render/sidebar.js)
- * Implements extension list, roving tabindex keyboard navigation, search, and risk indicators (Part 1 s7.8).
+ * Implements scaled extension list, roving tabindex keyboard navigation, search, and risk indicators (Part 1 s7.8, Milestone 2 C4).
  */
 
 import { h } from "../dom.js";
@@ -30,9 +30,15 @@ export function renderSidebarList(container, state, { onSelect }) {
   filtered.forEach((ext, index) => {
     const isSelected = ext.id === state.selectedId;
 
-    // 32px icon with fallback
+    // 52px icon tile with fallback
     let iconElement;
-    if (ext.icon_url && (ext.icon_url.startsWith("https:") || ext.icon_url.startsWith("/") || ext.icon_url.startsWith("assets/") || ext.icon_url.startsWith("data:"))) {
+    if (
+      ext.icon_url &&
+      (ext.icon_url.startsWith("https:") ||
+        ext.icon_url.startsWith("/") ||
+        ext.icon_url.startsWith("assets/") ||
+        ext.icon_url.startsWith("data:"))
+    ) {
       const img = h("img", {
         src: ext.icon_url,
         alt: "",
@@ -47,24 +53,29 @@ export function renderSidebarList(container, state, { onSelect }) {
       iconElement = h("div", { className: "ext-icon-tile" }, letter);
     }
 
-    // Name, badge & browser
+    // Name, badge & browser & version
     const isSample = ext.id && ext.id.startsWith("sample-");
     const badgeLabel = isSample ? "Sample" : "Imported";
     const badgeClass = isSample ? "badge-sample" : "badge-imported";
+    const extNameText = ext.name || "Unnamed Extension";
+    const browserText = ext.browser
+      ? ext.browser.charAt(0).toUpperCase() + ext.browser.slice(1)
+      : "Unknown";
+    const versionText = ext.version ? ` • v${ext.version}` : "";
 
     const info = h(
       "div",
       { className: "ext-info" },
-      h("div", { className: "ext-name", dir: "auto" }, ext.name || "Unnamed Extension"),
+      h("div", { className: "ext-name", dir: "auto", title: extNameText }, extNameText),
       h(
         "div",
         { className: "ext-browser-meta" },
         h("span", { className: `ext-badge ${badgeClass}` }, badgeLabel),
-        h("span", { className: "ext-browser" }, ext.browser || "Unknown Browser")
+        h("span", { className: "ext-browser" }, `${browserText}${versionText}`)
       )
     );
 
-    // Risk indicator: word + 40x4px score bar
+    // Risk indicator: word at 14px bold + 72x6px score bar
     const scoreVal = ext.risk_score || 0;
     const riskWord = (ext.risk_level || "low").toUpperCase();
     const barColor = scoreColor(scoreVal);
@@ -86,7 +97,7 @@ export function renderSidebarList(container, state, { onSelect }) {
       )
     );
 
-    // Row button with roving tabindex
+    // Row button with roving tabindex (min-height ~92px, padding 14px 18px)
     const row = h(
       "button",
       {

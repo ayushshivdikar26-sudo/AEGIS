@@ -1,7 +1,7 @@
 /**
  * AEGIS AI Security Overview Renderer (render/ai_overview.js)
- * Implements AI Overview card, loading skeleton, creep explanation,
- * action checklist, disclaimer, and regeneration (Milestone 2).
+ * Implements AI Overview card, loading skeleton, fallback handling,
+ * creep explanation, action checklist, and disclaimer (Milestone 2 - Part C5).
  * Strictly renders via textContent for XSS safety.
  */
 
@@ -17,10 +17,10 @@ export function renderAISkeleton() {
       h(
         "div",
         { className: "section-label" },
-        h("span", { className: "ai-sparkle-icon" }, "✦"),
+        h("span", { className: "ai-sparkle-icon", "aria-hidden": "true" }, "✦"),
         " AI Security Overview"
       ),
-      h("span", { className: "chip ai-chip-loading" }, "Analyzing...")
+      h("span", { className: "chip ai-chip-loading" }, "ANALYZING...")
     ),
     h(
       "div",
@@ -48,10 +48,10 @@ export function renderAIError(errorMessage, onRetry) {
       h(
         "div",
         { className: "section-label" },
-        h("span", { className: "ai-sparkle-icon" }, "✦"),
+        h("span", { className: "ai-sparkle-icon", "aria-hidden": "true" }, "✦"),
         " AI Security Overview"
       ),
-      h("span", { className: "chip chip-high" }, "Unavailable")
+      h("span", { className: "chip chip-high" }, "UNAVAILABLE")
     ),
     h(
       "div",
@@ -73,7 +73,7 @@ export function renderAIError(errorMessage, onRetry) {
         : null,
       h(
         "div",
-        { className: "ai-disclaimer" },
+        { className: "ai-disclaimer-italic" },
         "AEGIS continues to evaluate deterministic permission rules."
       )
     )
@@ -90,46 +90,77 @@ export function renderAIError(errorMessage, onRetry) {
 export function renderAIOverview(data, { onRegenerate } = {}) {
   const panel = h(
     "section",
-    { id: "ai-overview-section", className: "panel ai-card", "aria-labelledby": "ai-overview-heading" },
-    // 1. Header Row
+    { id: "ai-overview-section", className: "panel ai-card", "aria-labelledby": "ai-overview-heading" }
+  );
+
+  const isFallback = Boolean(data.is_fallback);
+
+  // 1. Header Row
+  const headerRow = h(
+    "div",
+    { className: "ai-header-row" },
     h(
       "div",
-      { className: "ai-header-row" },
-      h(
-        "div",
-        { className: "section-label", id: "ai-overview-heading" },
-        h("span", { className: "ai-sparkle-icon", "aria-hidden": "true" }, "✦"),
-        " AI Security Overview"
-      ),
-      h(
-        "div",
-        { className: "ai-header-meta" },
-        data.cached ? h("span", { className: "ai-badge ai-badge-cached" }, "Cached") : null,
-        h("span", { className: "ai-badge" }, data.model || "Groq"),
-        onRegenerate
-          ? h(
-              "button",
-              {
-                type: "button",
-                className: "ai-regen-btn",
-                title: "Regenerate overview with fresh AI analysis",
-                "aria-label": "Regenerate AI overview",
-              },
-              "↻ Regenerate"
-            )
-          : null
-      )
+      { className: "section-label", id: "ai-overview-heading" },
+      h("span", { className: "ai-sparkle-icon", "aria-hidden": "true" }, "✦"),
+      " AI Security Overview"
     ),
+    h(
+      "div",
+      { className: "ai-header-meta" },
+      isFallback
+        ? h("span", { className: "chip chip-mid" }, "FALLBACK")
+        : h("span", { className: "chip chip-ready" }, "READY"),
+      data.cached && !isFallback ? h("span", { className: "ai-badge ai-badge-cached" }, "Cached") : null,
+      !isFallback ? h("span", { className: "ai-badge" }, data.model || "Groq") : null,
+      onRegenerate && !isFallback
+        ? h(
+            "button",
+            {
+              type: "button",
+              className: "ai-regen-btn",
+              title: "Regenerate overview with fresh AI analysis",
+              "aria-label": "Regenerate AI overview",
+            },
+            "↻ Regenerate"
+          )
+        : null
+    )
+  );
+  panel.appendChild(headerRow);
 
-    // 2. Summary Card
+  // 1b. Fallback Banner if fallback model was used
+  if (isFallback) {
+    const fallbackBanner = h(
+      "div",
+      { className: "ai-fallback-banner" },
+      h("span", { className: "ai-fallback-text" }, "Generated from rules because the AI service was busy"),
+      onRegenerate
+        ? h(
+            "button",
+            {
+              type: "button",
+              className: "btn btn-secondary ai-retry-btn",
+            },
+            "Retry AI Overview"
+          )
+        : null
+    );
+    panel.appendChild(fallbackBanner);
+  }
+
+  // 2. Summary Block
+  panel.appendChild(
     h(
       "div",
       { className: "ai-block" },
       h("h4", { className: "ai-subheading" }, "Summary"),
       h("p", { className: "ai-summary-text", dir: "auto" }, data.summary || "No summary provided.")
-    ),
+    )
+  );
 
-    // 3. Permission Fit & Sensitivity
+  // 3. Permission Fit & Sensitivity Block
+  panel.appendChild(
     h(
       "div",
       { className: "ai-block" },
@@ -165,7 +196,7 @@ export function renderAIOverview(data, { onRegenerate } = {}) {
   }
   panel.appendChild(creepBlock);
 
-  // 5. Recommended Concrete Actions
+  // 5. Recommended Actions
   if (Array.isArray(data.recommended_actions) && data.recommended_actions.length > 0) {
     panel.appendChild(
       h(
@@ -188,7 +219,7 @@ export function renderAIOverview(data, { onRegenerate } = {}) {
     );
   }
 
-  // 6. Honest Limitations & Disclaimer Footer
+  // 6. Disclaimer Footer
   panel.appendChild(
     h(
       "div",
@@ -197,7 +228,12 @@ export function renderAIOverview(data, { onRegenerate } = {}) {
     )
   );
 
-  // Bind regenerate click
+  // Bind retry / regenerate click
+  const retryBtn = panel.querySelector(".ai-retry-btn");
+  if (retryBtn && onRegenerate) {
+    retryBtn.addEventListener("click", () => onRegenerate());
+  }
+
   const regenBtn = panel.querySelector(".ai-regen-btn");
   if (regenBtn && onRegenerate) {
     regenBtn.addEventListener("click", () => onRegenerate());

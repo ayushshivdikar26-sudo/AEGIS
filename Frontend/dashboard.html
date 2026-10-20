@@ -74,8 +74,12 @@
     <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle extension menu" aria-expanded="false" aria-controls="sidebar">
       <svg class="icon"><use href="assets/icons.svg#icon-menu"></use></svg>
     </button>
-    <svg width="24" height="24" aria-hidden="true"><use href="#aegis-logo"></use></svg>
-    <span id="mobile-header-title" class="mobile-header-title">AEGIS</span>
+    <a href="#hero-track" class="mobile-header-brand" aria-label="Scroll to AEGIS home">
+      <img src="assets/aegis-mark.png" alt="AEGIS mark" width="32" height="32">
+      <span class="aegis-wordmark aegis-wordmark--sm" aria-label="AEGIS">
+        <span class="wordmark-a" aria-hidden="true">V</span><span aria-hidden="true">EGIS</span>
+      </span>
+    </a>
   </header>
 
   <!-- Main Shell -->
@@ -84,17 +88,14 @@
 
     <!-- Navigation Sidebar -->
     <nav id="sidebar" class="sidebar" aria-label="Extensions">
-      <div class="sidebar-header">
-        <svg width="28" height="28" aria-hidden="true"><use href="#aegis-logo"></use></svg>
-        <span class="wordmark">AEGIS</span>
-      </div>
+      <a href="#hero-track" id="sidebar-header-link" class="sidebar-header" aria-label="Scroll to AEGIS home">
+        <img src="assets/aegis-mark.png" alt="AEGIS mark" class="sidebar-logo-mark" width="40" height="40">
+        <span class="aegis-wordmark aegis-wordmark--md" aria-label="AEGIS">
+          <span class="wordmark-a" aria-hidden="true">V</span><span aria-hidden="true">EGIS</span>
+        </span>
+      </a>
 
-      <div class="sidebar-action-area">
-        <button id="import-btn" class="btn btn-secondary import-btn" aria-haspopup="dialog" aria-expanded="false" title="Optional: analyze a custom WebExtension manifest">
-          <svg class="icon"><use href="assets/icons.svg#icon-plus"></use></svg>
-          <span>+ Import Manifest (Optional)</span>
-        </button>
-      </div>
+
 
       <div class="sidebar-search-area">
         <div class="search-box" role="search">
@@ -115,11 +116,7 @@
         <div id="fixture-notice" class="fixture-banner is-hidden">
           Sample data from dev mock API
         </div>
-        <div class="history-backup-row">
-          <button id="export-history-btn" class="backup-btn" type="button" title="Export snapshot history to JSON backup">Export History</button>
-          <button id="import-history-btn" class="backup-btn" type="button" title="Import snapshot history from JSON backup">Import History</button>
-          <input type="file" id="import-history-file" accept=".json" class="is-hidden" aria-hidden="true">
-        </div>
+
       </div>
     </nav>
 
@@ -128,7 +125,7 @@
       <div id="content-column" class="content-column">
         <!-- Rendered dynamically by render/*.js -->
         <div id="empty-state" class="panel state-message">
-          <svg width="64" height="64" aria-hidden="true"><use href="#aegis-logo"></use></svg>
+          <img src="assets/aegis-mark.png" width="64" height="64" alt="AEGIS" class="empty-state-logo">
           <h2>No extension selected</h2>
           <p>Select an extension from the sidebar to inspect requested permissions and creep history.</p>
         </div>
@@ -151,7 +148,7 @@
         <div id="import-error-banner" class="modal-error-banner is-hidden" role="alert"></div>
 
         <div class="modal-tip-banner">
-          💡 <strong>Tip for Non-Technical Users:</strong> You do not need to locate or upload any files! AEGIS includes interactive sample extensions in the sidebar ready to inspect with a single click.
+          💡 <strong>Tip for Non-Technical Users:</strong> You do not need to locate or upload any files! AEGIS includes interactive sample extensions in the intro section at the top of the page ready to inspect with a single click.
         </div>
 
         <div class="form-group">
@@ -199,14 +196,7 @@
     </div>
   </div>
 
-  <!-- Reusable SVG Symbol for AEGIS Placeholder Logo Mark (D-14) -->
-  <svg class="is-hidden" aria-hidden="true">
-    <symbol id="aegis-logo" viewBox="0 0 32 32">
-      <rect width="32" height="32" rx="8" fill="#2563EB"/>
-      <path d="M16 6L26 11V18C26 23.5 21.7 28.1 16 29C10.3 28.1 6 23.5 6 18V11L16 6Z" fill="#020617" stroke="#38BDF8" stroke-width="1.5" stroke-linejoin="round"/>
-      <circle cx="16" cy="17" r="3" fill="#38BDF8"/>
-    </symbol>
-  </svg>
+
 
   <script src="js/file-check.js"></script>
   <script type="module" src="js/main.js?v=1.1"></script>
