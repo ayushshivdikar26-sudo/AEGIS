@@ -125,8 +125,14 @@ async def generate_ai_overview(
         added_items = diff.get("api", {}).get("added", []) + diff.get("host", {}).get("added", [])
         broadened_items = diff.get("host", {}).get("broadened", [])
 
-        added_names = [item["name"] for item in added_items]
-        broadened_names = [item["name"] for item in broadened_items]
+        added_names = [item.get("name", str(item)) for item in added_items if isinstance(item, dict)]
+        broadened_names = [
+            f"{item.get('from_pattern')} -> {item.get('to_pattern')}"
+            if "from_pattern" in item
+            else item.get("name", str(item))
+            for item in broadened_items
+            if isinstance(item, dict)
+        ]
 
         creep_info = {
             "has_diff": bool(added_names or broadened_names),
@@ -157,10 +163,10 @@ async def generate_ai_overview(
             name=ext.get("name", "Unnamed Extension"),
             browser=ext.get("browser", "chrome"),
             version=version_str,
-            description=(
-                TRANSLATED_DESC_FALLBACK
-                if (target_snap.get("description") and PLACEHOLDER_REGEX.match(str(target_snap.get("description")).strip()))
-                else (target_snap.get("description") or ext.get("description"))
+            description=(
+                TRANSLATED_DESC_FALLBACK
+                if (target_snap.get("description") and PLACEHOLDER_REGEX.match(str(target_snap.get("description")).strip()))
+                else (target_snap.get("description") or ext.get("description"))
             ),
             api_permissions=api_perms,
             host_permissions=host_perms,
