@@ -124,24 +124,35 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
 
     // 1. Added
     for (const item of group.added || []) {
+      const riskLabel = (item.risk_label || "mid").toLowerCase();
+      const chipClass = (riskLabel === "critical" || riskLabel === "high") ? `chip chip-${riskLabel}` : "chip chip-mid";
+      const tagText = (riskLabel === "critical" || riskLabel === "high") ? `Added (${riskLabel.toUpperCase()})` : "Added";
       cont.appendChild(
         h(
           "div",
           { className: "diff-row diff-added" },
           h("span", { dir: "auto" }, `+ ${item.name}`),
-          h("span", { className: "chip chip-mid" }, "Added")
+          h("span", { className: chipClass }, tagText)
         )
       );
     }
 
     // 2. Broadened
     for (const b of broadened) {
+      const broadenedCol = h("div", { style: { "display": "flex", "flex-direction": "column", "gap": "2px" } },
+        h("span", { dir: "auto" }, `${b.from_pattern} -> ${b.to_pattern}`)
+      );
+      if (b.explanation) {
+        broadenedCol.appendChild(
+          h("span", { style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "font-weight": "normal", "font-family": "system-ui, sans-serif" } }, b.explanation)
+        );
+      }
       cont.appendChild(
         h(
           "div",
           { className: "diff-row diff-broadened" },
-          h("span", { dir: "auto" }, `${b.from_pattern} -> ${b.to_pattern}`),
-          h("span", { className: "chip chip-mid" }, "Broadened")
+          broadenedCol,
+          h("span", { className: "chip chip-high" }, "Broadened Scope")
         )
       );
     }
