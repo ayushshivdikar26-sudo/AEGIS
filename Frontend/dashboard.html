@@ -40,6 +40,13 @@
         <span class="wordmark">AEGIS</span>
       </div>
 
+      <div class="sidebar-action-area">
+        <button id="import-btn" class="btn btn-primary import-btn" aria-haspopup="dialog" aria-expanded="false">
+          <svg class="icon"><use href="assets/icons.svg#icon-plus"></use></svg>
+          <span>Import Manifest</span>
+        </button>
+      </div>
+
       <div class="sidebar-search-area">
         <div class="search-box" role="search">
           <svg class="icon"><use href="assets/icons.svg#icon-search"></use></svg>
@@ -73,6 +80,64 @@
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Manifest Import Modal Dialog -->
+  <div id="import-modal-backdrop" class="modal-backdrop" aria-hidden="true">
+    <div id="import-modal" class="modal-card" role="dialog" aria-labelledby="import-modal-title" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="import-modal-title" class="modal-title">Import WebExtension Manifest</h2>
+        <button id="import-modal-close" class="modal-close-btn" aria-label="Close dialog">
+          <svg class="icon"><use href="assets/icons.svg#icon-close"></use></svg>
+        </button>
+      </div>
+
+      <form id="import-form" class="modal-body">
+        <div id="import-error-banner" class="modal-error-banner is-hidden" role="alert"></div>
+
+        <div class="form-group">
+          <label for="import-file" class="form-label">Manifest File (.json)</label>
+          <input type="file" id="import-file" class="form-input" accept=".json,application/json">
+          <p class="form-help">Select a WebExtension manifest.json file from your computer (max 1 MB).</p>
+        </div>
+
+        <div class="form-group">
+          <label for="import-json-paste" class="form-label">Or Paste Manifest JSON</label>
+          <textarea id="import-json-paste" class="form-textarea" placeholder='{"manifest_version": 3, "name": "My Extension", "version": "1.0.0", ...}' spellcheck="false"></textarea>
+          <p class="form-help">Directly paste manifest JSON content for quick demonstration.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="import-browser" class="form-label">Target Browser</label>
+          <select id="import-browser" class="form-select">
+            <option value="chrome" selected>Google Chrome</option>
+            <option value="firefox">Mozilla Firefox</option>
+            <option value="edge">Microsoft Edge</option>
+            <option value="brave">Brave</option>
+            <option value="opera">Opera</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="import-store-id" class="form-label">Extension / Store ID (Optional)</label>
+          <input type="text" id="import-store-id" class="form-input" placeholder="e.g. quicknote-clipper">
+          <p class="form-help">Re-use the same ID across multiple imports to track historical version snapshots.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="import-display-name" class="form-label">Display Name Override (Optional)</label>
+          <input type="text" id="import-display-name" class="form-input" placeholder="Custom extension name">
+        </div>
+      </form>
+
+      <div class="modal-footer">
+        <button type="button" id="import-cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button type="submit" form="import-form" id="import-submit-btn" class="btn btn-primary">
+          <svg class="icon"><use href="assets/icons.svg#icon-upload"></use></svg>
+          <span id="import-submit-text">Analyze Manifest</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Reusable SVG Symbol for AEGIS Placeholder Logo Mark (D-14) -->
