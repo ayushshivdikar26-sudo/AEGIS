@@ -3,7 +3,14 @@
  * Bootstraps application, hash routing, background threads, and UI event binding.
  */
 
-import { initThreads } from "./threads.js";
+import { mountWebThreads } from "./webthreads.js";
+import { mountHeroLogo } from "./logo-fragments.js";
+
+// B5. Zero-latency preload of extension catalogue
+const preloadExtensionsPromise = getExtensions().catch((err) => {
+  console.warn("Preload getExtensions error:", err);
+  return null;
+});
 import { store } from "./state.js";
 import {
   getExtensions,
@@ -31,6 +38,48 @@ import { renderError, renderLoading } from "./render/states.js";
 
 const ID_REGEX = /^[A-Za-z0-9._:-]{1,128}$/;
 let aiAbortController = null;
+
+// Hero Smooth Scroll Utility (Milestone 2 - Part B2)
+function scrollToDashboard(callback) {
+  const target = document.getElementById("app-dashboard");
+  if (!target) {
+    if (callback) callback();
+    return;
+  }
+  const prefersReduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReduced) {
+    target.scrollIntoView({ behavior: "auto" });
+    if (callback) callback();
+    return;
+  }
+
+  const startY = window.scrollY || window.pageYOffset;
+  const targetY = target.getBoundingClientRect().top + startY;
+  const distance = targetY - startY;
+  const duration = 900;
+  let startTime = null;
+
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = easeInOutCubic(progress);
+    window.scrollTo(0, startY + distance * ease);
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      if (callback) callback();
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
 
 // Announce text to polite live region
 function announce(message) {
@@ -117,6 +166,14 @@ function setupImportModal() {
   }
 
   importBtn.addEventListener("click", openModal);
+  const heroImportBtn = document.getElementById("hero-btn-import");
+  if (heroImportBtn) {
+    heroImportBtn.addEventListener("click", () => {
+      scrollToDashboard(() => {
+        openModal();
+      });
+    });
+  }
   if (closeBtn) closeBtn.addEventListener("click", closeModal);
   if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
 
@@ -445,11 +502,64 @@ async function selectExtension(id) {
 
 // Bootstrap
 async function init() {
-  // 1. Initialize Animated Threads Canvas (Fail-safe)
+  // 1. Mount WebThreads (B3)
   try {
-    initThreads("threads");
+    const heroThreadsContainer = document.getElementById("hero-threads");
+    if (heroThreadsContainer) {
+      mountWebThreads(heroThreadsContainer, {
+        colors: ["#0078F0", "#10B0F0", "#7AF0F0"],
+        coreColor: "#E6FBFF",
+        backgroundColor: "transparent",
+      });
+    }
   } catch (err) {
-    console.warn("initThreads warning:", err);
+    console.warn("mountWebThreads warning:", err);
+  }
+
+  // 1b. Mount Hero Logo Fragments (B4)
+  try {
+    const heroLogoCanvas = document.getElementById("hero-logo");
+    const heroLogoStatic = document.querySelector(".hero-logo-static");
+    if (heroLogoCanvas) {
+      mountHeroLogo({
+        canvas: heroLogoCanvas,
+        staticImg: heroLogoStatic,
+        imageSrc: "assets/aegis-lockup.png",
+      });
+    }
+  } catch (err) {
+    console.warn("mountHeroLogo warning:", err);
+  }
+
+  // 1c. Wire Hero Action Buttons (B2)
+  try {
+    const heroBtnNotes = document.getElementById("hero-btn-notes");
+    if (heroBtnNotes) {
+      heroBtnNotes.addEventListener("click", () => {
+        scrollToDashboard(() => {
+          selectExtension("sample-notes-sync");
+        });
+      });
+    }
+
+    const heroBtnShield = document.getElementById("hero-btn-shield");
+    if (heroBtnShield) {
+      heroBtnShield.addEventListener("click", () => {
+        scrollToDashboard(() => {
+          selectExtension("sample-ad-shield");
+        });
+      });
+    }
+
+    const scrollNote = document.querySelector(".hero-scroll-note");
+    if (scrollNote) {
+      scrollNote.addEventListener("click", (e) => {
+        e.preventDefault();
+        scrollToDashboard();
+      });
+    }
+  } catch (err) {
+    console.warn("hero buttons warning:", err);
   }
 
   // 2. Setup Mobile Navigation (Fail-safe)
@@ -568,7 +678,7 @@ async function init() {
   // 6. Fetch Extensions List and Initialize Selection
   const listContainer = document.getElementById("extension-list");
   try {
-    const data = await getExtensions();
+    const data = await (preloadExtensionsPromise || getExtensions());
     const exts = (data && data.extensions) || [];
     store.setState({ extensions: exts, source: data ? data.source : "imported" });
 

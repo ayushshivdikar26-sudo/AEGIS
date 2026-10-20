@@ -8,6 +8,7 @@
   <link rel="icon" type="image/png" sizes="64x64" href="assets/aegis-mark-64.png">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/webthreads.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/motion.css">
@@ -15,11 +16,58 @@
 <body>
   <a href="#main" class="skip-link">Skip to main content</a>
 
-  <!-- Animated Indigo Threads Canvas -->
-  <canvas id="threads" aria-hidden="true"></canvas>
 
   <!-- Polite Live Region for Screen Readers (FR-F1, FR-F3) -->
   <div id="status-announcer" class="sr-only" aria-live="polite"></div>
+
+  <!-- Hero Section (Milestone 2 - Part B) -->
+  <section id="hero-track">
+    <div class="hero-stage">
+      <div id="hero-threads"></div>
+      <div class="hero-logo-container">
+        <canvas id="hero-logo" aria-hidden="true"></canvas>
+        <img class="hero-logo-static" src="assets/aegis-lockup.png" alt="AEGIS — Browser Extension Permission Auditor">
+      </div>
+      <div class="hero-copy">
+        <h1 class="hero-title">Browser Extension Permission Auditor</h1>
+        <p class="hero-description">See what your browser extensions are permitted to do, and detect when updates expand their access to your personal data or browsing history.</p>
+        <div class="hero-buttons">
+          <button id="hero-btn-notes" class="hero-btn" type="button">
+            <svg class="hero-btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--aegis-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2"></path>
+              <path d="M12 20v2"></path>
+              <path d="M4.93 4.93l1.41 1.41"></path>
+              <path d="M17.66 17.66l1.41 1.41"></path>
+              <path d="M2 12h2"></path>
+              <path d="M20 12h2"></path>
+              <path d="M4.93 19.07l1.41-1.41"></path>
+              <path d="M17.66 6.34l1.41-1.41"></path>
+            </svg>
+            <span>Sample Notes Sync (Permission Expansion 20 -&gt; 70)</span>
+          </button>
+          <button id="hero-btn-shield" class="hero-btn" type="button">
+            <svg class="hero-btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--aegis-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            <span>Sample Ad Shield (Filter Rules)</span>
+          </button>
+          <button id="hero-btn-import" class="hero-btn" type="button">
+            <span>+ Import Custom Manifest</span>
+          </button>
+        </div>
+      </div>
+      <a class="hero-scroll-note" href="#app-dashboard">
+        <span>Scroll down to see the live app</span>
+        <svg class="hero-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- App Dashboard Container (Target of Hero Scroll) -->
+  <main id="app-dashboard" class="app-dashboard">
 
   <!-- Mobile Top Bar (< 1024px) -->
   <header class="mobile-header">
@@ -76,7 +124,7 @@
     </nav>
 
     <!-- Main Content Area -->
-    <main id="main" class="main-content" tabindex="-1">
+    <section id="main" class="main-content" tabindex="-1">
       <div id="content-column" class="content-column">
         <!-- Rendered dynamically by render/*.js -->
         <div id="empty-state" class="panel state-message">
@@ -87,6 +135,7 @@
       </div>
     </main>
   </div>
+  </main>
 
   <!-- Manifest Import Modal Dialog -->
   <div id="import-modal-backdrop" class="modal-backdrop" aria-hidden="true">

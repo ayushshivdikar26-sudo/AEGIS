@@ -1,13 +1,214 @@
-/* Background Canvas */
-#threads {
-  position: fixed;
+/* ==========================================================================
+   Hero Section Layout (Milestone 2 - Part B)
+   ========================================================================== */
+#hero-track {
+  height: 180vh;
+  position: relative;
+  background-color: var(--bg-deep);
+}
+
+.hero-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--s-5);
+  box-sizing: border-box;
+}
+
+#hero-threads {
+  position: absolute;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: -1;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
   pointer-events: none;
+}
+
+.hero-logo-container {
+  position: relative;
+  z-index: 2;
+  width: 340px;
+  height: 361px;
+  max-width: 85vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--s-4);
+  flex-shrink: 0;
+}
+
+#hero-logo {
+  display: block;
+  width: 340px;
+  height: 361px;
+  max-width: 85vw;
+}
+
+.hero-logo-static {
+  display: none;
+  width: 340px;
+  height: auto;
+  max-width: 85vw;
+}
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.hero-title {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.hero-description {
+  font-size: clamp(16px, 1.8vw, 18px);
+  color: var(--text-muted);
+  max-width: 660px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.hero-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-3);
+  margin-top: var(--s-3);
+}
+
+.hero-btn {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-neutral);
+  border-radius: 14px;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 500;
+  padding: 12px 24px;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, outline 0.15s ease;
+  user-select: none;
+  text-decoration: none;
+}
+
+.hero-btn:hover {
+  background-color: var(--bg-surface-hover);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.hero-btn:focus-visible {
+  outline: 2px solid var(--aegis-blue);
+  outline-offset: 2px;
+  background-color: var(--bg-surface-hover);
+}
+
+.hero-btn-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  stroke: var(--aegis-blue);
+}
+
+.hero-scroll-note {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.hero-scroll-note:hover,
+.hero-scroll-note:focus-visible {
+  color: var(--aegis-blue);
+  outline: none;
+}
+
+.hero-chevron {
+  animation: chevronBob 2s infinite ease-in-out;
+}
+
+@keyframes chevronBob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-chevron {
+    animation: none;
+  }
+  .hero-logo-static {
+    display: block !important;
+  }
+  #hero-logo {
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero-stage {
+    padding: 0 var(--s-3);
+  }
+  .hero-logo-container {
+    width: 240px;
+    height: 255px;
+    margin-bottom: var(--s-2);
+  }
+  #hero-logo, .hero-logo-static {
+    width: 240px;
+    height: 255px;
+  }
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  .hero-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 16px;
+  }
+}
+
+/* App Dashboard Container */
+.app-dashboard {
+  min-height: 100vh;
+  position: relative;
   background-color: var(--bg);
 }
+
+
 
 /* App Shell */
 .app-shell {
