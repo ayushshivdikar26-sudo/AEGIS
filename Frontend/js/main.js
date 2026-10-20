@@ -149,24 +149,26 @@ async function selectExtension(id) {
       contentCol.appendChild(renderPermissions(permsData));
     }
 
+    const handleVersionChange = async (olderVer, newerVer) => {
+      try {
+        const updatedComp = await getComparison(id, olderVer, newerVer);
+        store.setState({ comparison: updatedComp });
+        // Re-render versions panel
+        const compSec = document.getElementById("comparison-section");
+        if (compSec) {
+          const freshPanel = renderVersions(versionsData, updatedComp, {
+            onVersionChange: handleVersionChange,
+          });
+          compSec.replaceWith(freshPanel);
+        }
+      } catch (err) {
+        alert(`Failed to compare versions: ${err.message}`);
+      }
+    };
+
     contentCol.appendChild(
       renderVersions(versionsData, compData, {
-        onVersionChange: async (olderVer, newerVer) => {
-          try {
-            const updatedComp = await getComparison(id, olderVer, newerVer);
-            store.setState({ comparison: updatedComp });
-            // Re-render versions panel
-            const compSec = document.getElementById("comparison-section");
-            if (compSec) {
-              const freshPanel = renderVersions(versionsData, updatedComp, {
-                onVersionChange: this,
-              });
-              compSec.replaceWith(freshPanel);
-            }
-          } catch (err) {
-            alert(`Failed to compare versions: ${err.message}`);
-          }
-        },
+        onVersionChange: handleVersionChange,
       })
     );
 
