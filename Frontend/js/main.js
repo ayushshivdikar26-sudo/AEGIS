@@ -14,6 +14,7 @@ import {
   getCreep,
   importExtension,
 } from "./api.js";
+import { validateManifestPreflight } from "./lib/validate_manifest.js";
 import { renderSidebarList } from "./render/sidebar.js";
 import { renderIdentity } from "./render/identity.js";
 import { renderGauge } from "./render/gauge.js";
@@ -169,32 +170,10 @@ function setupImportModal() {
       return;
     }
 
-    // Pre-flight client JSON syntax validation
-    let parsedJson;
-    try {
-      parsedJson = JSON.parse(manifestRaw);
-    } catch (parseErr) {
-      showError(`Malformed JSON syntax: ${parseErr.message}`);
-      return;
-    }
-
-    if (!parsedJson || typeof parsedJson !== "object" || Array.isArray(parsedJson)) {
-      showError("Manifest JSON must be a valid JSON object.");
-      return;
-    }
-
-    if (!parsedJson.manifest_version || (parsedJson.manifest_version !== 2 && parsedJson.manifest_version !== 3)) {
-      showError("Manifest must specify 'manifest_version' 2 or 3.");
-      return;
-    }
-
-    if (!parsedJson.name && !displayNameInput.value.trim()) {
-      showError("Manifest is missing a 'name' field. Please provide a Display Name.");
-      return;
-    }
-
-    if (!parsedJson.version) {
-      showError("Manifest is missing a 'version' field.");
+    // Pre-flight client JSON syntax and structure validation
+    const validation = validateManifestPreflight(manifestRaw, displayNameInput ? displayNameInput.value : "");
+    if (!validation.valid) {
+      showError(validation.error);
       return;
     }
 
