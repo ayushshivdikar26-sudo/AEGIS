@@ -187,6 +187,24 @@ def _row_to_snapshot(row: sqlite3.Row) -> dict[str, Any]:
     return d
 
 
+def pick_latest_snapshot(snaps: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Select the latest snapshot by captured_at, tie-broken by version and snapshot id."""
+    if not snaps:
+        return None
+
+    def _snapshot_sort_key(s: dict[str, Any]) -> tuple:
+        captured_at = str(s.get("captured_at") or "")
+        v_key = s.get("version_key")
+        if isinstance(v_key, list):
+            parsed_v = tuple(v_key)
+        else:
+            parsed_v = tuple(int(p) for p in str(s.get("version", "0")).split(".") if p.isdigit())
+        snap_id = str(s.get("id") or "")
+        return (captured_at, parsed_v, snap_id)
+
+    return max(snaps, key=_snapshot_sort_key)
+
+
 def db_list_extensions(user_id: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
     with get_connection() as conn:
         if user_id:
@@ -199,7 +217,28 @@ def db_list_extensions(user_id: str | None = None, limit: int = 200) -> list[dic
                 "SELECT * FROM extensions ORDER BY updated_at DESC LIMIT ?",
                 (limit,),
             ).fetchall()
-        return [dict(r) for r in rows]
+        exts = [dict(r) for r in rows]
+        if not exts:
+            return []
+
+        ext_ids = [e["id"] for e in exts]
+        placeholders = ",".join("?" for _ in ext_ids)
+        snap_rows = conn.execute(
+            f"SELECT * FROM extension_snapshots WHERE extension_id IN ({placeholders})",
+            ext_ids,
+        ).fetchall()
+
+        snaps_by_ext: dict[str, list[dict[str, Any]]] = {}
+        for sr in snap_rows:
+            snap = _row_to_snapshot(sr)
+            snaps_by_ext.setdefault(snap["extension_id"], []).append(snap)
+
+        for e in exts:
+            snaps = snaps_by_ext.get(e["id"], [])
+            e["extension_snapshots"] = snaps
+            e["latest_snapshot"] = pick_latest_snapshot(snaps)
+
+        return exts
 
 
 def db_get_extension(ext_id: str, user_id: str | None = None) -> dict[str, Any]:

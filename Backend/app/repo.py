@@ -8,7 +8,9 @@ import sys
 import uuid
 from typing import Any
 
+from Backend.app.cache import extension_list_cache
 from Backend.app.db import (
+    pick_latest_snapshot,
     db_clear_all_tables,
     db_delete_extension,
     db_find_extension_by_store_or_name,
@@ -35,8 +37,9 @@ _MOCK_STORE: dict[str, dict[str, Any]] = {
 
 def reset_mock_store() -> None:
     """Resets in-memory mock store and clears test DB for test isolation."""
-    global _MOCK_STORE
-    _MOCK_STORE = {"extensions": {}, "snapshots": {}, "creep_records": {}}
+    _MOCK_STORE["extensions"].clear()
+    _MOCK_STORE["snapshots"].clear()
+    _MOCK_STORE["creep_records"].clear()
     if "pytest" in sys.modules:
         with contextlib.suppress(Exception):
             db_clear_all_tables()
@@ -138,10 +141,14 @@ class Repository:
     def list_extensions(self, user_id: str, limit: int = 200) -> list[dict[str, Any]]:
         if self.use_mock:
             user_exts = [
-                ext
+                dict(ext)
                 for ext in _MOCK_STORE["extensions"].values()
                 if ext["user_id"] == user_id or ext.get("is_public", False)
             ]
+            for ext in user_exts:
+                snaps = [s for s in _MOCK_STORE["snapshots"].values() if s["extension_id"] == ext["id"]]
+                ext["extension_snapshots"] = snaps
+                ext["latest_snapshot"] = pick_latest_snapshot(snaps)
             return user_exts[:limit]
 
         if self.client is None:
@@ -149,21 +156,29 @@ class Repository:
             if db_exts:
                 return db_exts
             # Fallback to mock store if DB is empty
-            return [
-                ext
+            mock_exts = [
+                dict(ext)
                 for ext in _MOCK_STORE["extensions"].values()
                 if ext["user_id"] == user_id or ext.get("is_public", False)
-            ][:limit]
+            ]
+            for ext in mock_exts:
+                snaps = [s for s in _MOCK_STORE["snapshots"].values() if s["extension_id"] == ext["id"]]
+                ext["extension_snapshots"] = snaps
+                ext["latest_snapshot"] = pick_latest_snapshot(snaps)
+            return mock_exts[:limit]
 
         try:
             assert self.client is not None
             resp = (
                 self.client.table("extensions")
-                .select("id, name, browser, store_id, is_public, icon_path, updated_at")
+                .select("*, extension_snapshots(*)")
                 .limit(limit)
                 .execute()
             )
             if resp.data:
+                for ext in resp.data:
+                    snaps = ext.get("extension_snapshots") or []
+                    ext["latest_snapshot"] = pick_latest_snapshot(snaps)
                 return resp.data
             # If Supabase table is empty or unpopulated, fallback to persistent local DB
             return db_list_extensions(user_id=user_id, limit=limit)
@@ -267,17 +282,20 @@ class Repository:
 
         if self.client is None:
             _MOCK_STORE["extensions"][ext_id] = record
+            extension_list_cache.invalidate(user_id)
             return db_upsert_extension(record)
 
         try:
             assert self.client is not None
             resp = self.client.table("extensions").insert(record).execute()
+            extension_list_cache.invalidate(user_id)
             return resp.data[0] if resp.data else record
         except Exception as exc:
             logger.error(f"Error inserting extension: {exc}")
             raise exc
 
     def delete_extension(self, user_id: str, ext_id: str) -> None:
+        extension_list_cache.invalidate(user_id)
         if self.use_mock:
             ext = _MOCK_STORE["extensions"].get(ext_id)
             if not ext or ext["user_id"] != user_id:
@@ -394,6 +412,7 @@ class Repository:
     def insert_snapshot(
         self, user_id: str, ext_id: str, manifest: ParsedManifest, source: str = "local"
     ) -> tuple[dict[str, Any], bool]:
+        extension_list_cache.invalidate(user_id)
         """
         Inserts snapshot append-only.
         Returns (snapshot_record, created_boolean).
@@ -440,7 +459,8 @@ class Repository:
 
         try:
             assert self.client is not None
-            resp = self.client.table("extension_snapshots").insert(record).execute()
+            supabase_record = {k: v for k, v in record.items() if k != "source"}
+            resp = self.client.table("extension_snapshots").insert(supabase_record).execute()
             return (resp.data[0] if resp.data else record), True
         except Exception as exc:
             logger.error(f"Error inserting snapshot: {exc}")

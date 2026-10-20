@@ -11,6 +11,8 @@ from Backend.app.deps import (
     get_optional_user,
     get_user_db_client,
 )
+from Backend.app.cache import extension_list_cache
+from Backend.app.db import pick_latest_snapshot
 from Backend.app.errors import NotFoundError
 from Backend.app.repo import Repository
 from Backend.app.schemas import (
@@ -41,18 +43,31 @@ def get_repo(client=Depends(get_user_db_client)) -> Repository:
 
 @router.get("", response_model=ExtensionsListResponse)
 async def list_extensions(
+    response: Response,
     limit: int = Query(default=200, ge=1, le=200),
     user: CurrentUser | None = Depends(get_optional_user),
     repo: Repository = Depends(get_repo),
 ) -> ExtensionsListResponse:
     """Lists extensions for authenticated user or public catalogue."""
     user_id = user.id if user else "00000000-0000-0000-0000-000000000001"
+
+    cached = extension_list_cache.get(user_id, limit=limit)
+    if cached is not None:
+        response.headers["X-AEGIS-Cache"] = "HIT"
+        return cached
+
+    response.headers["X-AEGIS-Cache"] = "MISS"
     ext_rows = repo.list_extensions(user_id, limit=limit)
 
     items = []
     for ext in ext_rows:
         ext_id = ext["id"]
-        latest_snap = repo.get_latest_snapshot(user_id, ext_id)
+        latest_snap = ext.get("latest_snapshot")
+        if not latest_snap and ext.get("extension_snapshots"):
+            latest_snap = pick_latest_snapshot(ext["extension_snapshots"])
+        if not latest_snap and repo.client is None and not repo.use_mock:
+            latest_snap = repo.get_latest_snapshot(user_id, ext_id)
+
         if latest_snap:
             assessment = compute_snapshot_assessment(latest_snap)
             score = assessment.get("risk_score", 0)
@@ -75,7 +90,9 @@ async def list_extensions(
             )
         )
 
-    return ExtensionsListResponse(source="imported", extensions=items)
+    result = ExtensionsListResponse(source="imported", extensions=items)
+    extension_list_cache.set(user_id, result, limit=limit)
+    return result
 
 
 @router.get("/{id}", response_model=ExtensionDetailResponse)
@@ -287,4 +304,5 @@ async def delete_extension(
 ) -> Response:
     """Deletes the caller's extension and associated snapshots."""
     repo.delete_extension(user.id, id)
+    extension_list_cache.invalidate(user.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

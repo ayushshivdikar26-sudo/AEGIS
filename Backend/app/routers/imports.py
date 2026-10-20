@@ -16,6 +16,7 @@ from fastapi import (
     status,
 )
 
+from Backend.app.cache import extension_list_cache
 from Backend.app.config import settings
 from Backend.app.deps import CurrentUser, get_optional_user, get_user_db_client
 from Backend.app.errors import AppError, ConflictError, UnauthorizedError
@@ -174,6 +175,8 @@ async def import_manifest(
         risk_score=assessment.get("risk_score", 0),
         risk_level=assessment.get("risk_level", "low"),
     )
+
+    extension_list_cache.invalidate(effective_user_id)
 
     return ImportResponse(
         extension=response_item,
