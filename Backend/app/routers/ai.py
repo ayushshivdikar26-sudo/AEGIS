@@ -4,6 +4,7 @@ Server-side endpoint for AI-generated security overviews.
 Enforces per-IP rate limiting, DB caching, prompt injection defense, and input validation (Milestone 2).
 """
 
+import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Depends, Request
@@ -29,6 +30,10 @@ from Backend.app.services.ai import (
 from Backend.app.services.assessment import compare_snapshot_rows
 
 router = APIRouter(prefix="/api/ai-overview", tags=["ai-overview"])
+
+# In-flight task de-duplication for concurrent identical requests
+_in_flight_tasks: dict[tuple[str, str], asyncio.Task] = {}
+_in_flight_lock = asyncio.Lock()
 
 
 def get_repo(client=Depends(get_user_db_client)) -> Repository:
@@ -142,28 +147,49 @@ async def generate_ai_overview(
 
         host_perms = j.loads(host_perms)
 
-    # 6. Call Groq API via AI Service
-    ai_output, model_used = await call_groq_api(
-        name=ext.get("name", "Unnamed Extension"),
-        browser=ext.get("browser", "chrome"),
-        version=version_str,
-        description=target_snap.get("description") or ext.get("description"),
-        api_permissions=api_perms,
-        host_permissions=host_perms,
-        creep_info=creep_info,
-    )
+    # 6. Call Groq API via AI Service with concurrent de-duplication
+    snap_id = target_snap.get("id", version_str)
+    flight_key = (ext_id, snap_id)
 
-    # 7. Save to DB Cache
-    cache_record = {
-        "summary": ai_output.summary,
-        "permission_fit": ai_output.permission_fit,
-        "creep_detected": ai_output.creep_detected,
-        "creep_risks": ai_output.creep_risks,
-        "recommended_actions": ai_output.recommended_actions,
-        "model": model_used,
-        "disclaimer": "AI-generated from the manifest and description. AEGIS does not inspect extension code.",
-    }
-    db_save_ai_overview(ext_id, version_str, manifest_hash, PROMPT_VERSION, cache_record)
+    async def _execute_call():
+        return await call_groq_api(
+            name=ext.get("name", "Unnamed Extension"),
+            browser=ext.get("browser", "chrome"),
+            version=version_str,
+            description=target_snap.get("description") or ext.get("description"),
+            api_permissions=api_perms,
+            host_permissions=host_perms,
+            creep_info=creep_info,
+        )
+
+    async with _in_flight_lock:
+        if flight_key in _in_flight_tasks:
+            task = _in_flight_tasks[flight_key]
+        else:
+            task = asyncio.create_task(_execute_call())
+            _in_flight_tasks[flight_key] = task
+
+    try:
+        ai_output, model_used = await task
+    finally:
+        async with _in_flight_lock:
+            if _in_flight_tasks.get(flight_key) is task and task.done():
+                _in_flight_tasks.pop(flight_key, None)
+
+    is_fallback = model_used.endswith("-fallback") or model_used.endswith("-mock")
+
+    # 7. Save to DB Cache ONLY if not fallback (genuine Groq results are cached)
+    if not is_fallback:
+        cache_record = {
+            "summary": ai_output.summary,
+            "permission_fit": ai_output.permission_fit,
+            "creep_detected": ai_output.creep_detected,
+            "creep_risks": ai_output.creep_risks,
+            "recommended_actions": ai_output.recommended_actions,
+            "model": model_used,
+            "disclaimer": "AI-generated from the manifest and description. AEGIS does not inspect extension code.",
+        }
+        db_save_ai_overview(ext_id, version_str, manifest_hash, PROMPT_VERSION, cache_record)
 
     return AIOverviewResponse(
         extension_id=ext_id,
@@ -175,4 +201,5 @@ async def generate_ai_overview(
         recommended_actions=ai_output.recommended_actions,
         model=model_used,
         cached=False,
+        is_fallback=is_fallback,
     )

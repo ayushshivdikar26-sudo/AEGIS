@@ -30,6 +30,7 @@ import { renderAIOverview, renderAISkeleton, renderAIError } from "./render/ai_o
 import { renderError, renderLoading } from "./render/states.js";
 
 const ID_REGEX = /^[A-Za-z0-9._:-]{1,128}$/;
+let aiAbortController = null;
 
 // Announce text to polite live region
 function announce(message) {
@@ -334,8 +335,15 @@ async function selectExtension(id) {
     contentCol.appendChild(renderGauge(extData.assessment));
     contentCol.appendChild(renderAbout(extData));
 
-    // Milestone 2: AI Overview Card (Non-blocking async load)
+    // Milestone 2: AI Overview Card (Non-blocking async load with request cancellation)
     contentCol.appendChild(renderAISkeleton());
+
+    if (aiAbortController) {
+      aiAbortController.abort();
+    }
+    aiAbortController = new AbortController();
+    const currentAIController = aiAbortController;
+    const currentSelectedId = id;
 
     const loadAI = async (forceRefresh = false, olderV = null, newerV = null) => {
       try {
@@ -343,7 +351,14 @@ async function selectExtension(id) {
           version: newerV || extData.version,
           olderVersion: olderV || (vList.length >= 2 ? vList[1].version : null),
           forceRefresh,
+          signal: currentAIController.signal,
         });
+
+        // Ignore response if user switched to another extension or aborted
+        if (currentAIController.signal.aborted || store.getState().selectedId !== currentSelectedId) {
+          return;
+        }
+
         const activeCard = renderAIOverview(aiData, {
           onRegenerate: () => {
             const currentSection = document.getElementById("ai-overview-section");
@@ -358,6 +373,9 @@ async function selectExtension(id) {
           currentSection.replaceWith(activeCard);
         }
       } catch (err) {
+        if (currentAIController.signal.aborted || store.getState().selectedId !== currentSelectedId || err.name === "AbortError") {
+          return;
+        }
         console.warn("AI overview error:", err);
         const errCard = renderAIError(
           "AI overview unavailable: " + err.message,

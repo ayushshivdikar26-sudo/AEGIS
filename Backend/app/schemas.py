@@ -204,4 +204,5 @@ class AIOverviewResponse(StrictBaseModel):
         "AI-generated from the manifest and description. AEGIS does not inspect extension code."
     )
     cached: bool = False
+    is_fallback: bool = False
 

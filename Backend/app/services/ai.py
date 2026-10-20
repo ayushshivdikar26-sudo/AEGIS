@@ -19,7 +19,7 @@ from Backend.app.logging_setup import logger
 PROMPT_VERSION = "2026.10-v1"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
 DEFAULT_GROQ_MODEL = "openai/gpt-oss-20b"
-REQUEST_TIMEOUT_SECONDS = 15.0
+REQUEST_TIMEOUT_SECONDS = 25.0
 MAX_OUTPUT_TOKENS = 2048
 MAX_INPUT_DESCRIPTION_CHARS = 2000
 
@@ -256,24 +256,32 @@ async def call_groq_api(
 
         if resp.status_code != 200:
             err_msg = _scrub_secrets(resp.text)
-            logger.warning(f"Groq API returned status {resp.status_code}: {err_msg[:200]}")
-            raise AppError("ai_service_error", f"AI service returned status {resp.status_code}.")
+            logger.warning(f"Groq API returned status {resp.status_code}: {err_msg[:200]}; falling back to deterministic overview.")
+            return generate_fallback_overview(name, description, api_permissions, host_permissions, creep_info), "llama-3.1-8b-instant-fallback"
 
         data = resp.json()
-        raw_content = data["choices"][0]["message"]["content"]
+        choices = data.get("choices", [])
+        if not choices:
+            logger.warning("Groq returned empty choices list; falling back to deterministic overview.")
+            return generate_fallback_overview(name, description, api_permissions, host_permissions, creep_info), "llama-3.1-8b-instant-fallback"
+
+        raw_content = choices[0].get("message", {}).get("content", "")
+        if not raw_content or not raw_content.strip():
+            logger.warning("Groq output content was empty; falling back to deterministic overview.")
+            return generate_fallback_overview(name, description, api_permissions, host_permissions, creep_info), "llama-3.1-8b-instant-fallback"
+
         parsed_json = json.loads(raw_content)
         validated = StructuredAIOutput.model_validate(parsed_json)
         return validated, model
 
-    except AppError:
-        raise
-    except json.JSONDecodeError as exc:
-        logger.warning(f"Groq output could not be parsed as JSON: {exc}")
-        raise AppError("ai_parse_error", "AI service returned invalid response format.") from exc
     except httpx.TimeoutException as exc:
-        logger.warning("Groq API request timed out after 15 seconds.")
-        raise AppError("ai_timeout", "AI service request timed out.") from exc
-    except Exception as exc:
+        logger.warning(f"Groq API request timed out after {REQUEST_TIMEOUT_SECONDS}s; falling back to deterministic overview.")
+        return generate_fallback_overview(name, description, api_permissions, host_permissions, creep_info), "llama-3.1-8b-instant-fallback"
+    except httpx.HTTPError as exc:
         clean_msg = _scrub_secrets(str(exc))
-        logger.warning(f"Error calling Groq API: {clean_msg}")
-        raise AppError("ai_unavailable", "AI overview is currently unavailable.") from exc
+        logger.warning(f"Groq HTTP error: {clean_msg}; falling back to deterministic overview.")
+        return generate_fallback_overview(name, description, api_permissions, host_permissions, creep_info), "llama-3.1-8b-instant-fallback"
+    except (json.JSONDecodeError, Exception) as exc:
+        clean_msg = _scrub_secrets(str(exc))
+        logger.warning(f"Groq processing error ({type(exc).__name__}): {clean_msg}; falling back to deterministic overview.")
+        return generate_fallback_overview(name, description, api_permissions, host_permissions, creep_info), "llama-3.1-8b-instant-fallback" 

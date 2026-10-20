@@ -22,7 +22,7 @@ export function abortSectionRequest(sectionKey) {
   }
 }
 
-export async function request(path, { method = "GET", body = null, section = null, timeout = 10000 } = {}) {
+export async function request(path, { method = "GET", body = null, section = null, timeout = 10000, signal = null } = {}) {
   if (section) {
     abortSectionRequest(section);
   }
@@ -52,6 +52,13 @@ export async function request(path, { method = "GET", body = null, section = nul
   const controller = new AbortController();
   if (section) {
     inFlightControllers.set(section, controller);
+  }
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      signal.addEventListener("abort", () => controller.abort());
+    }
   }
 
   const timer = setTimeout(() => {
@@ -196,7 +203,7 @@ export async function importHistory(payload) {
 }
 
 // AI Overview Method (Milestone 2)
-export async function getAIOverview(id, { version = null, olderVersion = null, forceRefresh = false } = {}) {
+export async function getAIOverview(id, { version = null, olderVersion = null, forceRefresh = false, signal = null } = {}) {
   return request("/api/ai-overview", {
     method: "POST",
     body: {
@@ -206,7 +213,8 @@ export async function getAIOverview(id, { version = null, olderVersion = null, f
       force_refresh: forceRefresh,
     },
     section: "ai_overview",
-    timeout: 25000,
+    timeout: 30000,
+    signal,
   });
 }
 
