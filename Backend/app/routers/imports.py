@@ -16,8 +16,9 @@ from fastapi import (
     status,
 )
 
-from Backend.app.deps import CurrentUser, get_current_user, get_user_db_client
-from Backend.app.errors import AppError, ConflictError
+from Backend.app.config import settings
+from Backend.app.deps import CurrentUser, get_optional_user, get_user_db_client
+from Backend.app.errors import AppError, ConflictError, UnauthorizedError
 from Backend.app.rate_limiter import enforce_critical_route_rate_limit
 from Backend.app.repo import Repository
 from Backend.app.schemas import ExtensionListItem, ImportResponse, ImportSnapshotResult
@@ -75,11 +76,18 @@ async def import_manifest(
     display_name: str | None = Form(None),
     messages: UploadFile | None = File(None),
     icon: UploadFile | None = File(None),
-    user: CurrentUser = Depends(get_current_user),
+    user: CurrentUser | None = Depends(get_optional_user),
     client=Depends(get_user_db_client),
 ) -> ImportResponse:
     """Imports an extension manifest with magic-byte icon verification and deduplication."""
     enforce_critical_route_rate_limit(request, "import", max_requests=10, window_seconds=60)
+
+    if user:
+        effective_user_id = user.id
+    elif settings.ENVIRONMENT != "production":
+        effective_user_id = "00000000-0000-0000-0000-000000000001"
+    else:
+        raise UnauthorizedError("Authentication required.")
 
     # 1. Read and validate manifest payload
     manifest_bytes = await manifest.read()
@@ -125,20 +133,20 @@ async def import_manifest(
         icon_bytes = await icon.read()
         if icon_bytes:
             ext_format = validate_icon_magic_bytes(icon_bytes)
-            icon_path = f"{user.id}/{store_id or effective_name[:32]}.{ext_format}"
+            icon_path = f"{effective_user_id}/{store_id or effective_name[:32]}.{ext_format}"
 
     # 6. Database Operations (Centralized in Repository)
     repo = Repository(client=client)
 
     # Match existing extension or create new
-    existing_ext = repo.find_extension_by_store_or_name(user.id, browser, store_id, effective_name)
+    existing_ext = repo.find_extension_by_store_or_name(effective_user_id, browser, store_id, effective_name)
     matched_existing = existing_ext is not None
 
     if matched_existing and existing_ext:
         ext_id = existing_ext["id"]
     else:
         created_ext = repo.insert_extension(
-            user.id,
+            effective_user_id,
             browser=browser,
             store_id=store_id,
             name=effective_name,
@@ -148,7 +156,7 @@ async def import_manifest(
 
     # 7. Append-only snapshot insertion
     try:
-        snapshot_rec, created = repo.insert_snapshot(user.id, ext_id, parsed)
+        snapshot_rec, created = repo.insert_snapshot(effective_user_id, ext_id, parsed)
     except ConflictError as cerr:
         raise ConflictError(str(cerr))
 

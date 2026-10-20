@@ -214,3 +214,104 @@ def test_import_accepts_valid_png_icon():
     )
     assert resp.status_code == 201
     assert resp.json()["extension"]["icon_url"] is not None
+
+
+def test_import_unauthenticated_in_dev_mode_succeeds():
+    """Unauthenticated visitor in development mode can import demo manifests."""
+    manifest_data = {
+        "manifest_version": 3,
+        "name": "Unauthenticated Demo Tool",
+        "version": "1.0.0",
+        "permissions": ["storage"],
+    }
+    resp = client.post(
+        "/api/extensions/import",
+        files={"manifest": ("manifest.json", io.BytesIO(json.dumps(manifest_data).encode()), "application/json")},
+        data={"browser": "chrome"},
+        headers={"X-AEGIS-CSRF": "1", "Origin": "http://localhost:8000"},
+    )
+    assert resp.status_code == 201
+    assert resp.json()["extension"]["name"] == "Unauthenticated Demo Tool"
+
+
+def test_import_unauthenticated_in_production_mode_fails_401(monkeypatch):
+    """Unauthenticated caller in production mode must be rejected with HTTP 401."""
+    from Backend.app.config import settings
+
+    monkeypatch.setattr(settings, "ENVIRONMENT", "production")
+    monkeypatch.setattr("Backend.app.rate_limiter.is_redis_available", lambda: True)
+
+    class FakeRedis:
+        def incr(self, key): return 1
+        def expire(self, key, ttl): pass
+        def ttl(self, key): return 60
+    monkeypatch.setattr("Backend.app.rate_limiter.get_redis_client", lambda: FakeRedis())
+
+    manifest_data = {
+        "manifest_version": 3,
+        "name": "Prod Rejected Tool",
+        "version": "1.0.0",
+        "permissions": ["storage"],
+    }
+    resp = client.post(
+        "/api/extensions/import",
+        files={"manifest": ("manifest.json", io.BytesIO(json.dumps(manifest_data).encode()), "application/json")},
+        data={"browser": "chrome"},
+        headers={"X-AEGIS-CSRF": "1", "Origin": "http://localhost:8000"},
+    )
+    assert resp.status_code == 401
+    assert resp.json()["error"]["code"] == "unauthorized"
+
+
+def test_import_two_versions_creates_history_and_creep():
+    """Importing two versions of the same extension links snapshots and enables creep analysis."""
+    # Version 1.0.0
+    m1 = {
+        "manifest_version": 3,
+        "name": "Creep Test Tool",
+        "version": "1.0.0",
+        "description": "Text tool",
+        "permissions": ["storage"],
+        "host_permissions": ["https://api.example.com/*"],
+    }
+    r1 = client.post(
+        "/api/extensions/import",
+        files={"manifest": ("manifest.json", io.BytesIO(json.dumps(m1).encode()), "application/json")},
+        data={"browser": "chrome", "store_id": "creep-tool-id"},
+        headers={"X-AEGIS-CSRF": "1", "Origin": "http://localhost:8000"},
+    )
+    assert r1.status_code == 201
+    ext_id = r1.json()["extension"]["id"]
+
+    # Version 2.0.0 with added permissions
+    m2 = {
+        "manifest_version": 3,
+        "name": "Creep Test Tool",
+        "version": "2.0.0",
+        "description": "Text tool",
+        "permissions": ["storage", "history"],
+        "host_permissions": ["*://*/*"],
+    }
+    r2 = client.post(
+        "/api/extensions/import",
+        files={"manifest": ("manifest.json", io.BytesIO(json.dumps(m2).encode()), "application/json")},
+        data={"browser": "chrome", "store_id": "creep-tool-id"},
+        headers={"X-AEGIS-CSRF": "1", "Origin": "http://localhost:8000"},
+    )
+    assert r2.status_code == 201
+    assert r2.json()["matched_existing"] is True
+
+    # Verify versions list has both
+    v_resp = client.get(f"/api/extensions/{ext_id}/versions")
+    assert v_resp.status_code == 200
+    versions = [v["version"] for v in v_resp.json()["versions"]]
+    assert versions == ["2.0.0", "1.0.0"]
+
+    # Verify creep response detects creep
+    cr_resp = client.get(f"/api/extensions/{ext_id}/creep")
+    assert cr_resp.status_code == 200
+    creep = cr_resp.json()
+    assert creep["available"] is True
+    assert creep["score_to"] > creep["score_from"]
+    assert any(item["name"] == "history" for item in creep["added"])
+
