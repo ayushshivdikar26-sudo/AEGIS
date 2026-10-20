@@ -1,16 +1,28 @@
 :root {
-  /* AEGIS Dark Slate / Navy Palette (Matching AEGIS DUMMY) */
-  --bg: #020617;
-  --surface: #0F172A;
-  --surface-2: #1E293B;
-  --surface-3: #334155;
-  --surface-card: linear-gradient(180deg, #0F172A 0%, #020617 100%);
-  --border: #1E293B;
-  --border-subtle: #334155;
-  --accent: #2563EB;
-  --accent-text: #38BDF8;
-  --accent-glow: rgba(56, 189, 248, 0.15);
-  --thread-glow: #38BDF8;
+  /* ==========================================================================
+     AEGIS Brand Tokens (Sampled from Frontend/assets/AEGIS_logo_exact.svg)
+     ========================================================================== */
+  --aegis-blue: #10B0F0;          /* Primary neon blue */
+  --aegis-blue-deep: #0090F0;     /* Deeper blue */
+  --aegis-blue-glow: rgba(16, 176, 240, 0.35); /* Neon blue atmospheric glow */
+  --aegis-ice: #70F0F0;           /* Highlight cyan-white / core */
+  --bg-deep: #02040A;             /* Single source of truth page background */
+  --bg-surface: #0E1626;          /* Solid dark surface for cards and buttons */
+  --bg-surface-hover: #142036;    /* Interactive hover surface */
+  --border-neutral: rgba(255, 255, 255, 0.12); /* 1px neutral border */
+
+  /* UI Foundations (Harmonized with Brand Tokens) */
+  --bg: var(--bg-deep);
+  --surface: #0B1322;
+  --surface-2: #121E33;
+  --surface-3: #1B2C4B;
+  --surface-card: linear-gradient(180deg, #0B1322 0%, #02040A 100%);
+  --border: #182844;
+  --border-subtle: #243B63;
+  --accent: var(--aegis-blue);
+  --accent-text: var(--aegis-blue);
+  --accent-glow: var(--aegis-blue-glow);
+  --thread-glow: var(--aegis-blue);
   --text: #F8FAFC;
   --text-muted: #94A3B8;
 
@@ -19,13 +31,13 @@
   --risk-mid: #F59E0B;
   --risk-high: #EF4444;
 
-  /* Thread Color Ramp (Cyan / Deep Blue Ramp) */
-  --thread-1: #1E3A8A;
-  --thread-2: #2563EB;
-  --thread-3: #0EA5E9;
-  --thread-4: #38BDF8;
+  /* WebThreads Color Palette Tokens (Cyan/Neon Blue, No Purple) */
+  --thread-1: #0055B3;
+  --thread-2: var(--aegis-blue-deep);
+  --thread-3: var(--aegis-blue);
+  --thread-4: var(--aegis-ice);
 
-  /* Strict 4px Base Spacing Scale */
+  /* Spacing Scale */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -40,10 +52,18 @@
   --radius-full: 9999px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  /* Fixed Type Scale (12, 14, 16, 20, 28) */
+  /* Base Type Scale */
   --text-xs: 12px;
   --text-sm: 14px;
   --text-base: 16px;
   --text-lg: 20px;
   --text-xl: 28px;
+
+  /* Detail Card Typography Tokens (Milestone 2 - Part C6) */
+  --fs-detail-xl: 24px;
+  --fs-detail-lg: 20px;
+  --fs-detail-md: 18px;
+  --fs-detail-base: 16px;
+  --fs-detail-sm: 14px;
+  --fs-detail-xs: 13px;
 }
