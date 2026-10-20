@@ -107,8 +107,7 @@ def init_db() -> None:
                 prompt_version TEXT NOT NULL,
                 overview_json TEXT NOT NULL,
                 created_at TEXT NOT NULL,
-                UNIQUE(extension_id, version, manifest_hash, prompt_version),
-                FOREIGN KEY (extension_id) REFERENCES extensions(id) ON DELETE CASCADE
+                UNIQUE(extension_id, version, manifest_hash, prompt_version)
             );
 
             CREATE INDEX IF NOT EXISTS idx_ai_overviews_lookup
@@ -128,6 +127,43 @@ def init_db() -> None:
             );
             """
         )
+        # Migration: ensure ai_overviews has no foreign key to extensions
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA foreign_key_list(ai_overviews);")
+        fk_rows = cursor.fetchall()
+        if fk_rows:
+            logger.info("Migrating ai_overviews table to remove foreign key constraint...")
+            conn.execute("DROP TABLE IF EXISTS ai_overviews_old;")
+            conn.execute("ALTER TABLE ai_overviews RENAME TO ai_overviews_old;")
+            conn.execute(
+                """
+                CREATE TABLE ai_overviews (
+                    id TEXT PRIMARY KEY,
+                    extension_id TEXT NOT NULL,
+                    version TEXT NOT NULL,
+                    manifest_hash TEXT NOT NULL,
+                    prompt_version TEXT NOT NULL,
+                    overview_json TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    UNIQUE(extension_id, version, manifest_hash, prompt_version)
+                );
+                """
+            )
+            conn.execute(
+                """
+                INSERT INTO ai_overviews (id, extension_id, version, manifest_hash, prompt_version, overview_json, created_at)
+                SELECT id, extension_id, version, manifest_hash, prompt_version, overview_json, created_at
+                FROM ai_overviews_old;
+                """
+            )
+            conn.execute("DROP TABLE ai_overviews_old;")
+            conn.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_ai_overviews_lookup
+                    ON ai_overviews(extension_id, version, manifest_hash, prompt_version);
+                """
+            )
+
     logger.info(f"Initialized persistent database at {get_db_path()}")
 
 
