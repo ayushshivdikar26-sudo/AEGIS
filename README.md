@@ -160,9 +160,11 @@ AEGIS is built from the ground up according to strict defensive engineering prin
 The AEGIS analysis engine scores extensions between **0 and 100** using deterministic rules:
 
 ### Risk Thresholds
-- **Low Risk (0–29):** Minimal exposure; routine API permissions (e.g., `storage`, `alarms`) with narrow host access.
-- **Medium Risk (30–69):** Moderate exposure; access to active tabs or broad host patterns (`*://*.example.com/*`).
+- **Low Risk (0–34):** Minimal exposure; routine API permissions (e.g., `storage`, `alarms`) with narrow host access.
+- **Medium Risk (35–69):** Moderate exposure; access to active tabs or broad host patterns (`*://*.example.com/*`).
 - **High Risk (70–100):** High exposure; broad host access (`<all_urls>`, `*://*/*`) combined with sensitive APIs (`webRequestBlocking`, `cookies`, `nativeMessaging`).
+
+> **Note on Risk Interpretation:** The AEGIS score reflects assessed declarative capability and permission exposure under formula version 1. It is a deterministic measurement of privilege scope, not proof of malicious behavior or code compromise.
 
 ### Justification Rules (R1–R6)
 - **R1 (Declared & Aligned):** Permission declared in manifest and justified by keywords in description $\rightarrow$ `justified`.

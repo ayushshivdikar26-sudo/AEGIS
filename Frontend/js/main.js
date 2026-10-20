@@ -13,6 +13,9 @@ import {
   getComparison,
   getCreep,
   importExtension,
+  exportHistory,
+  importHistory,
+  getAIOverview,
 } from "./api.js";
 import { validateManifestPreflight } from "./lib/validate_manifest.js";
 import { renderSidebarList } from "./render/sidebar.js";
@@ -23,6 +26,7 @@ import { renderAbout } from "./render/about.js";
 import { renderPermissions } from "./render/permissions.js";
 import { renderVersions } from "./render/versions.js";
 import { renderCreep } from "./render/creep.js";
+import { renderAIOverview, renderAISkeleton, renderAIError } from "./render/ai_overview.js";
 import { renderError, renderLoading } from "./render/states.js";
 
 const ID_REGEX = /^[A-Za-z0-9._:-]{1,128}$/;
@@ -235,7 +239,26 @@ async function selectExtension(id) {
   }
 
   window.location.hash = `#/ext/${id}`;
+  try {
+    localStorage.setItem("aegis_selected_extension", id);
+  } catch {}
   store.setState({ selectedId: id });
+
+  // Update selection highlight on all sidebar rows immediately in DOM
+  const listContainer = document.getElementById("extension-list");
+  if (listContainer) {
+    const rows = listContainer.querySelectorAll(".ext-row");
+    rows.forEach((row) => {
+      const match = row.dataset.id === id;
+      row.classList.toggle("is-selected", match);
+      row.setAttribute("aria-current", match ? "true" : "false");
+      row.setAttribute("aria-selected", match ? "true" : "false");
+      row.setAttribute("tabindex", match ? "0" : "-1");
+      if (match) {
+        row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+    });
+  }
 
   // Close mobile drawer on selection if open
   const sidebar = document.getElementById("sidebar");
@@ -311,24 +334,73 @@ async function selectExtension(id) {
     contentCol.appendChild(renderGauge(extData.assessment));
     contentCol.appendChild(renderAbout(extData));
 
+    // Milestone 2: AI Overview Card (Non-blocking async load)
+    contentCol.appendChild(renderAISkeleton());
+
+    const loadAI = async (forceRefresh = false, olderV = null, newerV = null) => {
+      try {
+        const aiData = await getAIOverview(id, {
+          version: newerV || extData.version,
+          olderVersion: olderV || (vList.length >= 2 ? vList[1].version : null),
+          forceRefresh,
+        });
+        const activeCard = renderAIOverview(aiData, {
+          onRegenerate: () => {
+            const currentSection = document.getElementById("ai-overview-section");
+            if (currentSection) {
+              currentSection.replaceWith(renderAISkeleton());
+            }
+            loadAI(true, olderV, newerV);
+          },
+        });
+        const currentSection = document.getElementById("ai-overview-section");
+        if (currentSection) {
+          currentSection.replaceWith(activeCard);
+        }
+      } catch (err) {
+        console.warn("AI overview error:", err);
+        const errCard = renderAIError(
+          "AI overview unavailable: " + err.message,
+          () => {
+            const currentSection = document.getElementById("ai-overview-section");
+            if (currentSection) {
+              currentSection.replaceWith(renderAISkeleton());
+            }
+            loadAI(false, olderV, newerV);
+          }
+        );
+        const currentSection = document.getElementById("ai-overview-section");
+        if (currentSection) {
+          currentSection.replaceWith(errCard);
+        }
+      }
+    };
+    loadAI(false);
+
     if (permsData.error) {
       contentCol.appendChild(renderError("Failed to load permissions.", () => selectExtension(id)));
     } else {
       contentCol.appendChild(renderPermissions(permsData));
     }
 
-    const handleVersionChange = async (olderVer, newerVer) => {
+    const handleVersionDiff = async (olderVer, newerVer) => {
       try {
         const updatedComp = await getComparison(id, olderVer, newerVer);
         store.setState({ comparison: updatedComp });
-        // Re-render versions panel
+        // Re-render versions panel with updated comparison
         const compSec = document.getElementById("comparison-section");
         if (compSec) {
           const freshPanel = renderVersions(versionsData, updatedComp, {
-            onVersionChange: handleVersionChange,
+            onVersionChange: handleVersionDiff,
           });
           compSec.replaceWith(freshPanel);
         }
+        // Update AI overview with the compared versions
+        const currentSection = document.getElementById("ai-overview-section");
+        if (currentSection) {
+          currentSection.replaceWith(renderAISkeleton());
+        }
+        loadAI(false, olderVer, newerVer);
       } catch (err) {
         alert(`Failed to compare versions: ${err.message}`);
       }
@@ -336,7 +408,7 @@ async function selectExtension(id) {
 
     contentCol.appendChild(
       renderVersions(versionsData, compData, {
-        onVersionChange: handleVersionChange,
+        onVersionChange: handleVersionDiff,
       })
     );
 
@@ -355,62 +427,136 @@ async function selectExtension(id) {
 
 // Bootstrap
 async function init() {
-  // 1. Initialize Animated Threads Canvas
-  initThreads("threads");
+  // 1. Initialize Animated Threads Canvas (Fail-safe)
+  try {
+    initThreads("threads");
+  } catch (err) {
+    console.warn("initThreads warning:", err);
+  }
 
-  // 2. Setup Mobile Navigation
-  setupMobileDrawer();
+  // 2. Setup Mobile Navigation (Fail-safe)
+  try {
+    setupMobileDrawer();
+  } catch (err) {
+    console.warn("setupMobileDrawer warning:", err);
+  }
 
   // 2b. Setup Manifest Import Modal
   setupImportModal();
 
   // 3. Setup Search Bar
-  const searchInput = document.getElementById("search-input");
-  const clearBtn = document.getElementById("search-clear-btn");
-  const countEl = document.getElementById("search-count");
+  try {
+    const searchInput = document.getElementById("search-input");
+    const clearBtn = document.getElementById("search-clear-btn");
+    const countEl = document.getElementById("search-count");
 
-  function updateSearch() {
-    const q = searchInput.value;
-    store.setState({ searchQuery: q });
+    function updateSearch() {
+      const q = searchInput ? searchInput.value : "";
+      store.setState({ searchQuery: q });
+      if (clearBtn) {
+        clearBtn.classList.toggle("is-hidden", !q);
+      }
+      const state = store.getState();
+      const filtered = (state.extensions || []).filter(
+        (e) =>
+          (e.name && e.name.toLowerCase().includes(q.toLowerCase())) ||
+          (e.browser && e.browser.toLowerCase().includes(q.toLowerCase()))
+      );
+      if (countEl) {
+        countEl.textContent = q ? `${filtered.length} extensions found` : "";
+      }
+      const listContainer = document.getElementById("extension-list");
+      if (listContainer) {
+        renderSidebarList(listContainer, state, { onSelect: selectExtension });
+      }
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener("input", updateSearch);
+    }
     if (clearBtn) {
-      clearBtn.classList.toggle("is-hidden", !q);
+      clearBtn.addEventListener("click", () => {
+        if (searchInput) {
+          searchInput.value = "";
+          searchInput.focus();
+        }
+        updateSearch();
+      });
     }
-    const state = store.getState();
-    const filtered = state.extensions.filter(
-      (e) =>
-        (e.name && e.name.toLowerCase().includes(q.toLowerCase())) ||
-        (e.browser && e.browser.toLowerCase().includes(q.toLowerCase()))
-    );
-    if (countEl) {
-      countEl.textContent = q ? `${filtered.length} extensions found` : "";
-    }
-    const listContainer = document.getElementById("extension-list");
-    if (listContainer) {
-      renderSidebarList(listContainer, state, { onSelect: selectExtension });
-    }
+  } catch (err) {
+    console.warn("search setup warning:", err);
   }
 
-  if (searchInput) {
-    searchInput.addEventListener("input", updateSearch);
-  }
-  if (clearBtn) {
-    clearBtn.addEventListener("click", () => {
-      searchInput.value = "";
-      updateSearch();
-      searchInput.focus();
-    });
+  // 4. Setup History Export & Import (Milestone 1c)
+  try {
+    const exportBtn = document.getElementById("export-history-btn");
+    if (exportBtn) {
+      exportBtn.addEventListener("click", async () => {
+        try {
+          const backupData = await exportHistory();
+          const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `aegis-history-backup-${new Date().toISOString().slice(0, 10)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          announce("Snapshot history exported successfully.");
+        } catch (err) {
+          alert(`Failed to export history: ${err.message}`);
+        }
+      });
+    }
+
+    const importBtn = document.getElementById("import-history-btn");
+    const importFileInput = document.getElementById("import-history-file");
+    if (importBtn && importFileInput) {
+      importBtn.addEventListener("click", () => {
+        importFileInput.click();
+      });
+
+      importFileInput.addEventListener("change", async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const jsonPayload = JSON.parse(text);
+          const res = await importHistory(jsonPayload);
+          announce(`History imported: ${res.imported_snapshots} snapshots loaded.`);
+          alert(`Import successful! ${res.imported_snapshots} snapshots imported (${res.skipped_snapshots} existing skipped).`);
+          window.location.reload();
+        } catch (err) {
+          alert(`Import failed: ${err.message}`);
+        } finally {
+          importFileInput.value = "";
+        }
+      });
+    }
+  } catch (err) {
+    console.warn("history buttons warning:", err);
   }
 
-  // 4. Fetch Extensions List
+  // 5. Listen for hash changes
+  window.addEventListener("hashchange", () => {
+    const hash = window.location.hash;
+    const match = hash.match(/^#\/ext\/([A-Za-z0-9._:-]{1,128})$/);
+    if (match && match[1] !== store.getState().selectedId) {
+      selectExtension(match[1]);
+    }
+  });
+
+  // 6. Fetch Extensions List and Initialize Selection
   const listContainer = document.getElementById("extension-list");
   try {
     const data = await getExtensions();
-    const exts = data.extensions || [];
-    store.setState({ extensions: exts, source: data.source });
+    const exts = (data && data.extensions) || [];
+    store.setState({ extensions: exts, source: data ? data.source : "imported" });
 
     const notice = document.getElementById("fixture-notice");
     if (notice) {
-      if (data.source === "fixture") {
+      if (data && data.source === "fixture") {
         notice.textContent = "Sample data from dev mock API";
         notice.classList.remove("is-hidden");
       } else {
@@ -419,32 +565,43 @@ async function init() {
       }
     }
 
-    renderSidebarList(listContainer, store.getState(), { onSelect: selectExtension });
+    if (listContainer) {
+      renderSidebarList(listContainer, store.getState(), { onSelect: selectExtension });
+    }
 
-    // 5. Handle Initial Route
+    // Handle Initial Route & Persistence (Milestone 1a)
     const hash = window.location.hash;
     const match = hash.match(/^#\/ext\/([A-Za-z0-9._:-]{1,128})$/);
-    if (match) {
+    const savedId = (() => {
+      try {
+        return localStorage.getItem("aegis_selected_extension");
+      } catch {
+        return null;
+      }
+    })();
+
+    if (match && exts.some((e) => e.id === match[1])) {
       selectExtension(match[1]);
+    } else if (savedId && exts.some((e) => e.id === savedId)) {
+      selectExtension(savedId);
     } else if (exts.length > 0) {
       selectExtension(exts[0].id);
     }
   } catch (err) {
+    console.error("Failed to load extensions:", err);
     if (listContainer) {
       listContainer.replaceChildren(
         renderError(`Failed to load extensions: ${err.message}`, () => init())
       );
     }
   }
-
-  // Listen for hash changes
-  window.addEventListener("hashchange", () => {
-    const hash = window.location.hash;
-    const match = hash.match(/^#\/ext\/([A-Za-z0-9._:-]{1,128})$/);
-    if (match && match[1] !== store.getState().selectedId) {
-      selectExtension(match[1]);
-    }
-  });
 }
 
-document.addEventListener("DOMContentLoaded", init);
+// Bootstrap with readyState check to guarantee execution in all browsers
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => {
+    init().catch(console.error);
+  });
+} else {
+  init().catch(console.error);
+}

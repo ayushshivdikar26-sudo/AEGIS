@@ -263,20 +263,82 @@ def populate_installed_extensions_into_store(
     if not scanned:
         return 0
 
-    target_store["extensions"].clear()
-    target_store["snapshots"].clear()
-    target_store["creep_records"].clear()
+    # Append-only: do NOT clear snapshots, preserve historical versions
+    from Backend.app.db import db_insert_snapshot, db_upsert_extension
+
+    # Optional Supabase synchronization when remote project credentials are configured
+    supabase_client = None
+    try:
+        from Backend.app.config import settings
+
+        if (
+            settings.SUPABASE_URL
+            and "localhost" not in settings.SUPABASE_URL
+            and "your-project" not in settings.SUPABASE_URL
+            and settings.SUPABASE_SECRET_KEY
+            and not settings.SUPABASE_SECRET_KEY.startswith("mock-")
+            and "your-" not in settings.SUPABASE_SECRET_KEY
+        ):
+            from Backend.app.admin import get_admin_client
+
+            supabase_client = get_admin_client()
+    except Exception:
+        supabase_client = None
+
+    import uuid
 
     count = 0
     for ext_rec, snaps in scanned:
         ext_rec["user_id"] = user_id
         ext_id = ext_rec["id"]
         target_store["extensions"][ext_id] = ext_rec
+        with contextlib.suppress(Exception):
+            db_upsert_extension(ext_rec)
 
-        # Add snapshots
+        # Sync extension to Supabase if client is active
+        if supabase_client is not None:
+            with contextlib.suppress(Exception):
+                ext_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, ext_id))
+                supabase_client.table("extensions").upsert({
+                    "id": ext_uuid,
+                    "user_id": user_id,
+                    "browser": ext_rec.get("browser", "chrome").lower(),
+                    "store_id": ext_rec.get("store_id"),
+                    "name": ext_rec.get("name", "Unknown"),
+                    "icon_path": ext_rec.get("icon_path"),
+                    "is_public": bool(ext_rec.get("is_public", True)),
+                    "source": ext_rec.get("source", "user"),
+                }).execute()
+
+        # Add snapshots append-only
         for s in snaps:
             s["user_id"] = user_id
             target_store["snapshots"][s["id"]] = s
+            with contextlib.suppress(Exception):
+                db_insert_snapshot(s)
+
+            if supabase_client is not None:
+                with contextlib.suppress(Exception):
+                    ext_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, ext_id))
+                    snap_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, s["id"]))
+                    supabase_client.table("extension_snapshots").upsert({
+                        "id": snap_uuid,
+                        "extension_id": ext_uuid,
+                        "user_id": user_id,
+                        "version": s["version"],
+                        "version_key": list(s.get("version_key") or []),
+                        "manifest_version": int(s.get("manifest_version", 3)),
+                        "name": s.get("name", "Unknown"),
+                        "description": s.get("description", ""),
+                        "api_permissions": sorted(list(s.get("api_permissions", []))),
+                        "host_permissions": sorted(list(s.get("host_permissions", []))),
+                        "optional_api_permissions": sorted(list(s.get("optional_api_permissions", []))),
+                        "optional_host_permissions": sorted(list(s.get("optional_host_permissions", []))),
+                        "content_script_matches": sorted(list(s.get("content_script_matches", []))),
+                        "features": sorted(list(s.get("features", []))),
+                        "manifest": s.get("manifest", {}),
+                        "manifest_sha256": s.get("manifest_sha256", ""),
+                    }).execute()
 
         # If extension has multiple versions, generate real creep records between pairs
         if len(snaps) >= 2:

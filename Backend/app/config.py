@@ -19,6 +19,13 @@ class Settings(BaseSettings):
     SUPABASE_PUBLISHABLE_KEY: str = Field(default="mock-publishable-key", description="Anon / publishable key")
     SUPABASE_SECRET_KEY: str = Field(default="mock-secret-key", description="Service role key for admin tasks only")
     SUPABASE_JWT_SECRET: str = Field(default="", description="Optional legacy HS256 secret fallback")
+    AEGIS_TEST_PROJECT_REF: str = Field(default="", description="Optional test project reference safety guard")
+
+    # Database & Persistence (Milestone 1c)
+    DATABASE_URL: str = Field(
+        default="",
+        description="Persistent database connection string (e.g. sqlite:///... or postgresql://...); defaults to local SQLite file Backend/data/aegis.db",
+    )
 
     # Redis for rate limiting (Upstash Redis or local)
     RATE_LIMIT_STORAGE_URI: str = Field(

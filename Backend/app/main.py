@@ -22,7 +22,7 @@ from Backend.app.errors import (
 )
 from Backend.app.middleware import RequestTracingMiddleware
 from Backend.app.rate_limiter import limiter
-from Backend.app.routers import auth, extensions, health, imports
+from Backend.app.routers import ai, auth, extensions, health, history, imports
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 FRONTEND_DIR = BASE_DIR / "Frontend"
@@ -40,7 +40,10 @@ class SecureStaticFiles(StaticFiles):
             return Response(status_code=404)
         if p.suffix.lower() in PROHIBITED_EXTENSIONS:
             return Response(status_code=404)
-        return await super().get_response(path, scope)
+        response = await super().get_response(path, scope)
+        if settings.ENVIRONMENT != "production":
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
 
 
 def create_app() -> FastAPI:
@@ -83,14 +86,21 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(extensions.router)
     app.include_router(imports.router)
+    app.include_router(history.router)
+    app.include_router(ai.router)
 
     # 5. Serve Single-Page Frontend at Root
     @app.get("/", include_in_schema=False)
+    @app.get("/index.html", include_in_schema=False)
+    @app.get("/dashboard.html", include_in_schema=False)
     async def serve_index():
         index_file = FRONTEND_DIR / "dashboard.html"
         if not index_file.exists():
             return Response(status_code=404)
-        return FileResponse(index_file, media_type="text/html; charset=utf-8")
+        response = FileResponse(index_file, media_type="text/html; charset=utf-8")
+        if settings.ENVIRONMENT != "production":
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
 
     if FRONTEND_DIR.exists():
         app.mount("/", SecureStaticFiles(directory=str(FRONTEND_DIR), html=True), name="frontend")

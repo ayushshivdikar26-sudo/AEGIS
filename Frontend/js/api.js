@@ -186,3 +186,30 @@ export async function deleteExtension(id) {
   return request(`/api/extensions/${encId}`, { method: "DELETE" });
 }
 
+// History Backup Methods (Milestone 1c)
+export async function exportHistory() {
+  return request("/api/history/export");
+}
+
+export async function importHistory(payload) {
+  return request("/api/history/import", { method: "POST", body: payload });
+}
+
+// AI Overview Method (Milestone 2)
+export async function getAIOverview(id, { version = null, olderVersion = null, forceRefresh = false } = {}) {
+  return request("/api/ai-overview", {
+    method: "POST",
+    body: {
+      extension_id: id,
+      version,
+      older_version: olderVersion,
+      force_refresh: forceRefresh,
+    },
+    section: "ai_overview",
+    timeout: 25000,
+  });
+}
+
+
+
+

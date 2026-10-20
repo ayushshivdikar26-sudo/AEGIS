@@ -92,9 +92,10 @@ export function renderSidebarList(container, state, { onSelect }) {
       {
         type: "button",
         role: "listitem",
-        className: "ext-row",
+        className: isSelected ? "ext-row is-selected" : "ext-row",
         tabIndex: isSelected || (!state.selectedId && index === 0) ? 0 : -1,
         "aria-current": isSelected ? "true" : "false",
+        "aria-selected": isSelected ? "true" : "false",
         dataset: { id: ext.id, index },
       },
       iconElement,
