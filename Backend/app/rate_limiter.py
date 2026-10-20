@@ -1,3 +1,4 @@
+import contextlib
 """
 AEGIS Redis-Backed Rate Limiter with Fail-Closed Protection (Backend/app/rate_limiter.py)
 Enforces distributed request rate limits and fails closed on critical security routes if Redis fails (PRD Part 2c s7).
@@ -20,9 +21,16 @@ _IN_MEMORY_RATE_LIMITS: dict[str, list[float]] = {}
 
 
 def reset_rate_limits() -> None:
-    """Clears in-memory rate limits for test isolation."""
-    global _IN_MEMORY_RATE_LIMITS
-    _IN_MEMORY_RATE_LIMITS = {}
+    """Clears in-memory and Redis rate limits for test isolation."""
+    _IN_MEMORY_RATE_LIMITS.clear()
+    with contextlib.suppress(Exception):
+        limiter.reset()
+    with contextlib.suppress(Exception):
+        client = get_redis_client()
+        if client and is_redis_available():
+            keys = client.keys("rl:*")
+            if keys:
+                client.delete(*keys)
 
 
 def get_redis_client() -> redis.Redis | None:

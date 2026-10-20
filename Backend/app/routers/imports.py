@@ -128,7 +128,8 @@ async def import_manifest(
             code="name_unresolved",
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
-    parsed.name = effective_name
+    if effective_name != parsed.name:
+        parsed = parsed.model_copy(update={"name": effective_name})
 
     # 5. Handle optional icon upload
     icon_path = None

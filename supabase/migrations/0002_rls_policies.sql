@@ -45,6 +45,15 @@ grant select, insert on public.snapshot_permissions to authenticated;
 grant select, insert on public.permission_creep_records to authenticated;
 grant select, insert, delete on public.ai_analyses to authenticated;
 
+-- Grant administrative access to service_role (backend admin and migration utility)
+grant all on all tables in schema public to service_role;
+grant all on all sequences in schema public to service_role;
+grant all on all routines in schema public to service_role;
+
+alter default privileges in schema public grant all on tables to service_role;
+alter default privileges in schema public grant all on sequences to service_role;
+alter default privileges in schema public grant all on routines to service_role;
+
 -- Explicitly ensure UPDATE and DELETE are revoked where immutability is required
 revoke update, delete on public.extension_snapshots from authenticated;
 revoke update, delete on public.snapshot_permissions from authenticated;
@@ -182,3 +191,27 @@ drop policy if exists ai_analyses_delete_policy on public.ai_analyses;
 create policy ai_analyses_delete_policy on public.ai_analyses
   for delete to authenticated
   using (user_id = (select auth.uid()));
+
+-- ============================================================================
+-- 8. Policies: service_role full administrative access (Bypasses forced RLS)
+-- ============================================================================
+drop policy if exists extensions_service_role_policy on public.extensions;
+create policy extensions_service_role_policy on public.extensions
+  for all to service_role using (true) with check (true);
+
+drop policy if exists snapshots_service_role_policy on public.extension_snapshots;
+create policy snapshots_service_role_policy on public.extension_snapshots
+  for all to service_role using (true) with check (true);
+
+drop policy if exists snapshot_perms_service_role_policy on public.snapshot_permissions;
+create policy snapshot_perms_service_role_policy on public.snapshot_permissions
+  for all to service_role using (true) with check (true);
+
+drop policy if exists creep_service_role_policy on public.permission_creep_records;
+create policy creep_service_role_policy on public.permission_creep_records
+  for all to service_role using (true) with check (true);
+
+drop policy if exists ai_analyses_service_role_policy on public.ai_analyses;
+create policy ai_analyses_service_role_policy on public.ai_analyses
+  for all to service_role using (true) with check (true);
+

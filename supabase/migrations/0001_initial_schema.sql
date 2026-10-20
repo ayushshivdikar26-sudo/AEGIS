@@ -184,29 +184,63 @@ security definer
 set search_path = ''
 as $$
 declare
-  arr text[];
   item text;
 begin
-  foreach arr slice 1 in array array[
-    new.api_permissions,
-    new.host_permissions,
-    new.optional_api_permissions,
-    new.optional_host_permissions,
-    new.content_script_matches
-  ] loop
-    if arr is not null then
-      foreach item in array arr loop
-        if item is null or char_length(item) = 0 or char_length(item) > 2048 then
-          raise exception 'Snapshot permission item must be between 1 and 2048 characters'
-            using errcode = 'check_violation';
-        end if;
-        if item ~ '[\x00-\x1f\x7f]' then
-          raise exception 'Snapshot permission item contains prohibited control characters'
-            using errcode = 'check_violation';
-        end if;
-      end loop;
-    end if;
-  end loop;
+  if new.api_permissions is not null then
+    foreach item in array new.api_permissions loop
+      if item is null or char_length(item) = 0 or char_length(item) > 2048 then
+        raise exception 'Snapshot permission item must be between 1 and 2048 characters' using errcode = 'check_violation';
+      end if;
+      if item ~ '[\x00-\x1f\x7f]' then
+        raise exception 'Snapshot permission item contains prohibited control characters' using errcode = 'check_violation';
+      end if;
+    end loop;
+  end if;
+
+  if new.host_permissions is not null then
+    foreach item in array new.host_permissions loop
+      if item is null or char_length(item) = 0 or char_length(item) > 2048 then
+        raise exception 'Snapshot permission item must be between 1 and 2048 characters' using errcode = 'check_violation';
+      end if;
+      if item ~ '[\x00-\x1f\x7f]' then
+        raise exception 'Snapshot permission item contains prohibited control characters' using errcode = 'check_violation';
+      end if;
+    end loop;
+  end if;
+
+  if new.optional_api_permissions is not null then
+    foreach item in array new.optional_api_permissions loop
+      if item is null or char_length(item) = 0 or char_length(item) > 2048 then
+        raise exception 'Snapshot permission item must be between 1 and 2048 characters' using errcode = 'check_violation';
+      end if;
+      if item ~ '[\x00-\x1f\x7f]' then
+        raise exception 'Snapshot permission item contains prohibited control characters' using errcode = 'check_violation';
+      end if;
+    end loop;
+  end if;
+
+  if new.optional_host_permissions is not null then
+    foreach item in array new.optional_host_permissions loop
+      if item is null or char_length(item) = 0 or char_length(item) > 2048 then
+        raise exception 'Snapshot permission item must be between 1 and 2048 characters' using errcode = 'check_violation';
+      end if;
+      if item ~ '[\x00-\x1f\x7f]' then
+        raise exception 'Snapshot permission item contains prohibited control characters' using errcode = 'check_violation';
+      end if;
+    end loop;
+  end if;
+
+  if new.content_script_matches is not null then
+    foreach item in array new.content_script_matches loop
+      if item is null or char_length(item) = 0 or char_length(item) > 2048 then
+        raise exception 'Snapshot permission item must be between 1 and 2048 characters' using errcode = 'check_violation';
+      end if;
+      if item ~ '[\x00-\x1f\x7f]' then
+        raise exception 'Snapshot permission item contains prohibited control characters' using errcode = 'check_violation';
+      end if;
+    end loop;
+  end if;
+
   return new;
 end;
 $$;
