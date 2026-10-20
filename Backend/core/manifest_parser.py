@@ -51,7 +51,53 @@ BIDI_CODEPOINTS = {
     0x2069,
 }
 
-PLACEHOLDER_REGEX = re.compile(r"^__MSG_(.+)__$", re.IGNORECASE)
+PLACEHOLDER_REGEX = re.compile(r"^__MSG_([A-Za-z0-9_@]+)__$", re.IGNORECASE)
+TRANSLATED_DESC_FALLBACK = (
+    "This extension uses a translated description that is not included in the uploaded manifest."
+)
+
+
+def _extract_locale_messages(messages: Any, default_locale: str | None) -> dict[str, str]:
+    if not isinstance(messages, dict):
+        return {}
+
+    target = messages
+    # 1. Check for nested _locales
+    if "_locales" in target and isinstance(target["_locales"], dict):
+        target = target["_locales"]
+
+    # 2. If target has locale keys (e.g., 'en', 'en_US', 'default')
+    if default_locale:
+        loc_key = default_locale.lower().replace("-", "_")
+        found = None
+        for k in target:
+            if k.lower().replace("-", "_") == loc_key:
+                found = target[k]
+                break
+        if not found:
+            for k in target:
+                k_norm = k.lower().replace("-", "_")
+                if k_norm.startswith(loc_key) or loc_key.startswith(k_norm):
+                    found = target[k]
+                    break
+        if isinstance(found, dict):
+            target = found
+
+    # 3. If nested under "messages.json" or "messages"
+    if "messages.json" in target and isinstance(target["messages.json"], dict):
+        target = target["messages.json"]
+    elif "messages" in target and isinstance(target["messages"], dict):
+        target = target["messages"]
+
+    # 4. Flatten to case-insensitive lookup
+    msg_lookup: dict[str, str] = {}
+    for mk, mv in target.items():
+        if isinstance(mv, dict) and "message" in mv:
+            msg_lookup[mk.lower()] = str(mv["message"])
+        elif isinstance(mv, str):
+            msg_lookup[mk.lower()] = mv
+
+    return msg_lookup
 
 
 def _check_depth(val: Any, current_depth: int = 1) -> None:
@@ -134,6 +180,8 @@ def parse_manifest(
     raw: bytes | str | dict[str, Any],
     *,
     messages: dict[str, Any] | None = None,
+    catalog_description: str | None = None,
+    catalog_name: str | None = None,
 ) -> ParsedManifest:
     """
     Parse, validate, and normalize an untrusted browser extension manifest.
@@ -240,14 +288,11 @@ def parse_manifest(
     name_is_placeholder = False
     desc_is_placeholder = False
 
-    # Normalized lookup dict for messages (case-insensitive keys)
-    msg_lookup: dict[str, str] = {}
-    if messages and isinstance(messages, dict):
-        for mk, mv in messages.items():
-            if isinstance(mv, dict) and "message" in mv:
-                msg_lookup[mk.lower()] = str(mv["message"])
-            elif isinstance(mv, str):
-                msg_lookup[mk.lower()] = mv
+    default_locale = data.get("default_locale")
+    if default_locale is not None and not isinstance(default_locale, str):
+        default_locale = None
+
+    msg_lookup = _extract_locale_messages(messages, default_locale)
 
     # Resolve name
     name_match = PLACEHOLDER_REGEX.match(raw_name.strip())
@@ -255,6 +300,8 @@ def parse_manifest(
         key = name_match.group(1).lower()
         if key in msg_lookup:
             raw_name = msg_lookup[key]
+        elif catalog_name:
+            raw_name = catalog_name
         else:
             name_is_placeholder = True
             warnings.append(
@@ -279,6 +326,10 @@ def parse_manifest(
                         message=f"Unresolved localization placeholder in description: {raw_desc}",
                     )
                 )
+                if catalog_description:
+                    raw_desc = catalog_description
+                else:
+                    raw_desc = TRANSLATED_DESC_FALLBACK
 
     sanitized_name, name_bidi = _sanitize_text(raw_name)
     sanitized_desc, desc_bidi = _sanitize_text(raw_desc) if raw_desc else (None, False)

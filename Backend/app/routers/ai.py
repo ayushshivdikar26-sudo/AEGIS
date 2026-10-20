@@ -1,3 +1,4 @@
+from Backend.core.manifest_parser import PLACEHOLDER_REGEX, TRANSLATED_DESC_FALLBACK
 """
 AEGIS AI Overview Router (Backend/app/routers/ai.py)
 Server-side endpoint for AI-generated security overviews.
@@ -156,7 +157,11 @@ async def generate_ai_overview(
             name=ext.get("name", "Unnamed Extension"),
             browser=ext.get("browser", "chrome"),
             version=version_str,
-            description=target_snap.get("description") or ext.get("description"),
+            description=(
+                TRANSLATED_DESC_FALLBACK
+                if (target_snap.get("description") and PLACEHOLDER_REGEX.match(str(target_snap.get("description")).strip()))
+                else (target_snap.get("description") or ext.get("description"))
+            ),
             api_permissions=api_perms,
             host_permissions=host_perms,
             creep_info=creep_info,

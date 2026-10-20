@@ -1,3 +1,4 @@
+from Backend.core.manifest_parser import PLACEHOLDER_REGEX, TRANSLATED_DESC_FALLBACK
 """
 AEGIS Extensions Router (Backend/app/routers/extensions.py)
 Contract v1 extension queries, permissions inspection, version diffing, and creep audits (PRD Part 2c s6).
@@ -78,10 +79,14 @@ async def list_extensions(
             level = "low"
             version = "1.0"
 
+        ext_name = ext.get("name", "Unknown")
+        if ext_name and PLACEHOLDER_REGEX.match(ext_name.strip()):
+            ext_name = ext.get("store_id") or "Unnamed Extension"
+
         items.append(
             ExtensionListItem(
                 id=ext_id,
-                name=ext.get("name", "Unknown"),
+                name=ext_name,
                 browser=ext.get("browser", "chrome"),
                 version=version,
                 icon_url=ext.get("icon_path"),
@@ -110,6 +115,10 @@ async def get_extension_detail(
         assessment = compute_snapshot_assessment(latest_snap)
         version = latest_snap.get("version", "1.0")
         desc_text = latest_snap.get("description")
+        if desc_text and PLACEHOLDER_REGEX.match(desc_text.strip()):
+            desc_text = ext.get("description") or TRANSLATED_DESC_FALLBACK
+            if desc_text and PLACEHOLDER_REGEX.match(desc_text.strip()):
+                desc_text = TRANSLATED_DESC_FALLBACK
         desc_origin = "manifest" if desc_text else "unavailable"
     else:
         assessment = {
@@ -135,7 +144,7 @@ async def get_extension_detail(
 
     return ExtensionDetailResponse(
         id=ext["id"],
-        name=ext.get("name", "Unknown"),
+        name=(ext.get("store_id") or "Unnamed Extension") if PLACEHOLDER_REGEX.match(ext.get("name", "").strip()) else ext.get("name", "Unknown"),
         browser=ext.get("browser", "chrome"),
         version=version,
         icon_url=ext.get("icon_path"),

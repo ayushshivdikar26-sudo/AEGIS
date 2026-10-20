@@ -113,6 +113,7 @@ async def import_manifest(
         parsed = parse_manifest(
             manifest_bytes,
             messages=messages_dict,
+            catalog_name=display_name,
         )
     except ManifestError as merr:
         raise AppError(
@@ -127,6 +128,7 @@ async def import_manifest(
             code="name_unresolved",
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
+    parsed.name = effective_name
 
     # 5. Handle optional icon upload
     icon_path = None
