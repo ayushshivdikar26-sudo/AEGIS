@@ -64,3 +64,10 @@ dev/mock-api/__pycache__/
 # Runtime extracted browser extension icons
 Frontend/assets/installed_icons/*
 !Frontend/assets/installed_icons/.gitkeep
+
+# Separate vite/react experiment
+aegis-dev/
+
+# Root temporary verification screenshots
+/*.png
+/verification_screenshots/
