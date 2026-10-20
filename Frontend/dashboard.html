@@ -16,7 +16,6 @@
 <body>
   <a href="#main" class="skip-link">Skip to main content</a>
 
-
   <!-- Polite Live Region for Screen Readers (FR-F1, FR-F3) -->
   <div id="status-announcer" class="sr-only" aria-live="polite"></div>
 
@@ -69,7 +68,7 @@
   <!-- App Dashboard Container (Target of Hero Scroll) -->
   <main id="app-dashboard" class="app-dashboard">
 
-  <!-- Mobile Top Bar (< 1024px) -->
+  <!-- Mobile Top Bar (< 768px) -->
   <header class="mobile-header">
     <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle extension menu" aria-expanded="false" aria-controls="sidebar">
       <svg class="icon"><use href="assets/icons.svg#icon-menu"></use></svg>
@@ -88,14 +87,12 @@
 
     <!-- Navigation Sidebar -->
     <nav id="sidebar" class="sidebar" aria-label="Extensions">
-      <a href="#hero-track" id="sidebar-header-link" class="sidebar-header" aria-label="Scroll to AEGIS home">
+      <a href="#hero-track" id="sidebar-brand-link" class="sidebar-header sidebar-brand" aria-label="Scroll to AEGIS home">
         <img src="assets/aegis-mark.png" alt="AEGIS mark" class="sidebar-logo-mark" width="40" height="40">
         <span class="aegis-wordmark aegis-wordmark--md" aria-label="AEGIS">
           <span class="wordmark-a" aria-hidden="true">V</span><span aria-hidden="true">EGIS</span>
         </span>
       </a>
-
-
 
       <div class="sidebar-search-area">
         <div class="search-box" role="search">
@@ -116,7 +113,6 @@
         <div id="fixture-notice" class="fixture-banner is-hidden">
           Sample data from dev mock API
         </div>
-
       </div>
     </nav>
 
@@ -130,7 +126,7 @@
           <p>Select an extension from the sidebar to inspect requested permissions and creep history.</p>
         </div>
       </div>
-    </main>
+    </section>
   </div>
   </main>
 
@@ -196,9 +192,7 @@
     </div>
   </div>
 
-
-
   <script src="js/file-check.js"></script>
-  <script type="module" src="js/main.js?v=1.1"></script>
+  <script type="module" src="js/main.js?v=1.2"></script>
 </body>
 </html>
