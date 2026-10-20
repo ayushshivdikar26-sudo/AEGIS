@@ -47,12 +47,21 @@ export function renderSidebarList(container, state, { onSelect }) {
       iconElement = h("div", { className: "ext-icon-tile" }, letter);
     }
 
-    // Name & browser
+    // Name, badge & browser
+    const isSample = ext.id && ext.id.startsWith("sample-");
+    const badgeLabel = isSample ? "Sample" : "Imported";
+    const badgeClass = isSample ? "badge-sample" : "badge-imported";
+
     const info = h(
       "div",
       { className: "ext-info" },
       h("div", { className: "ext-name", dir: "auto" }, ext.name || "Unnamed Extension"),
-      h("div", { className: "ext-browser" }, ext.browser || "Unknown Browser")
+      h(
+        "div",
+        { className: "ext-browser-meta" },
+        h("span", { className: `ext-badge ${badgeClass}` }, badgeLabel),
+        h("span", { className: "ext-browser" }, ext.browser || "Unknown Browser")
+      )
     );
 
     // Risk indicator: word + 40x4px score bar

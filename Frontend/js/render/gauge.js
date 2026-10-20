@@ -156,6 +156,39 @@ export function renderGauge(assessmentData) {
 
   panel.appendChild(gaugeWrapper);
 
+  // Non-technical Plain-Language Guidance Card
+  let levelTitle = "Routine Exposure";
+  let levelDesc = "This extension requests standard capabilities needed for basic tasks with minimal data exposure.";
+  let levelColor = "var(--risk-low)";
+
+  if (level === "mid" || level === "medium") {
+    levelTitle = "Moderate Exposure";
+    levelDesc = "This extension requests moderate capabilities (such as inspecting active browser tabs or specific website domains).";
+    levelColor = "var(--risk-mid)";
+  } else if (level === "high" || level === "critical") {
+    levelTitle = "Broad / Sensitive Exposure";
+    levelDesc = "This extension requests access to sensitive browser features (such as browsing history or cookies) or unrestricted access to all websites.";
+    levelColor = "var(--risk-high)";
+  }
+
+  const plainGuideCard = h(
+    "div",
+    { className: "risk-explanation-card" },
+    h(
+      "div",
+      { className: "risk-card-header" },
+      h("span", { className: "status-dot", style: { "background-color": levelColor } }),
+      h("strong", null, `Understanding This Score: ${levelTitle}`)
+    ),
+    h("p", { className: "risk-card-body" }, levelDesc),
+    h(
+      "p",
+      { className: "risk-card-disclaimer" },
+      "Objective audit note: This score measures declared capability and exposure scope. It does not imply malicious intent."
+    )
+  );
+  panel.appendChild(plainGuideCard);
+
   // Plain-Language Summary (FR-E9)
   if (assess.plain_summary) {
     panel.appendChild(

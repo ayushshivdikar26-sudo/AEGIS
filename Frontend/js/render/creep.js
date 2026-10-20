@@ -54,7 +54,21 @@ export function renderCreep(creepData) {
     h("span", null, creep.outcome)
   );
 
-  panel.appendChild(outcomeBanner);
+  let outcomeSubtitle = "This update maintains a consistent permission footprint.";
+  if (creep.outcome === "Significant increase in assessed permission exposure") {
+    outcomeSubtitle = "This update meaningfully expands what data or websites this extension can access on your computer.";
+  } else if (creep.outcome === "Permission changes require review") {
+    outcomeSubtitle = "Permissions were modified in ways that warrant user attention.";
+  }
+
+  const outcomeBlock = h(
+    "div",
+    { className: "creep-outcome-block", style: { "display": "flex", "flex-direction": "column", "gap": "var(--s-1)" } },
+    outcomeBanner,
+    h("div", { style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "padding-left": "18px" } }, outcomeSubtitle)
+  );
+
+  panel.appendChild(outcomeBlock);
 
   // Summary
   if (creep.summary) {

@@ -41,9 +41,9 @@
       </div>
 
       <div class="sidebar-action-area">
-        <button id="import-btn" class="btn btn-primary import-btn" aria-haspopup="dialog" aria-expanded="false">
+        <button id="import-btn" class="btn btn-secondary import-btn" aria-haspopup="dialog" aria-expanded="false" title="Optional: analyze a custom WebExtension manifest">
           <svg class="icon"><use href="assets/icons.svg#icon-plus"></use></svg>
-          <span>Import Manifest</span>
+          <span>+ Import Manifest (Optional)</span>
         </button>
       </div>
 
@@ -94,6 +94,10 @@
 
       <form id="import-form" class="modal-body">
         <div id="import-error-banner" class="modal-error-banner is-hidden" role="alert"></div>
+
+        <div class="modal-tip-banner">
+          💡 <strong>Tip for Non-Technical Users:</strong> You do not need to locate or upload any files! AEGIS includes interactive sample extensions in the sidebar ready to inspect with a single click.
+        </div>
 
         <div class="form-group">
           <label for="import-file" class="form-label">Manifest File (.json)</label>

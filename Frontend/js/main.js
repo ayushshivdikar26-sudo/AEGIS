@@ -18,6 +18,7 @@ import { validateManifestPreflight } from "./lib/validate_manifest.js";
 import { renderSidebarList } from "./render/sidebar.js";
 import { renderIdentity } from "./render/identity.js";
 import { renderGauge } from "./render/gauge.js";
+import { renderGuide } from "./render/guide.js";
 import { renderAbout } from "./render/about.js";
 import { renderPermissions } from "./render/permissions.js";
 import { renderVersions } from "./render/versions.js";
@@ -291,9 +292,20 @@ async function selectExtension(id) {
     }
     store.setState({ comparison: compData });
 
-    // Render Panels in exact PRD order:
-    // Identity, Risk gauge, About, Permissions, Version comparison, Permission creep
+    // Render Panels:
     contentCol.replaceChildren();
+
+    // Guided Demo Quick-Selector Banner (For Non-Technical Audiences)
+    contentCol.appendChild(
+      renderGuide({
+        selectedId: id,
+        onSelect: selectExtension,
+        onOpenImport: () => {
+          const btn = document.getElementById("import-btn");
+          if (btn) btn.click();
+        },
+      })
+    );
 
     contentCol.appendChild(renderIdentity(extData));
     contentCol.appendChild(renderGauge(extData.assessment));
