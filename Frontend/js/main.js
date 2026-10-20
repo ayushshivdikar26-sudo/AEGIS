@@ -12,13 +12,16 @@ import {
   getVersions,
   getComparison,
   getCreep,
+  importExtension,
   exportHistory,
   importHistory,
   getAIOverview,
 } from "./api.js";
+import { validateManifestPreflight } from "./lib/validate_manifest.js";
 import { renderSidebarList } from "./render/sidebar.js";
 import { renderIdentity } from "./render/identity.js";
 import { renderGauge } from "./render/gauge.js";
+import { renderGuide } from "./render/guide.js";
 import { renderAbout } from "./render/about.js";
 import { renderPermissions } from "./render/permissions.js";
 import { renderVersions } from "./render/versions.js";
@@ -71,6 +74,160 @@ function setupMobileDrawer() {
   window.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && sidebar.classList.contains("open")) {
       closeDrawer();
+    }
+  });
+}
+
+// Manifest Import Modal & Workflow
+function setupImportModal() {
+  const importBtn = document.getElementById("import-btn");
+  const backdrop = document.getElementById("import-modal-backdrop");
+  const closeBtn = document.getElementById("import-modal-close");
+  const cancelBtn = document.getElementById("import-cancel-btn");
+  const form = document.getElementById("import-form");
+  const fileInput = document.getElementById("import-file");
+  const pasteInput = document.getElementById("import-json-paste");
+  const browserInput = document.getElementById("import-browser");
+  const storeIdInput = document.getElementById("import-store-id");
+  const displayNameInput = document.getElementById("import-display-name");
+  const errorBanner = document.getElementById("import-error-banner");
+  const submitBtn = document.getElementById("import-submit-btn");
+  const submitText = document.getElementById("import-submit-text");
+
+  if (!importBtn || !backdrop || !form) return;
+
+  function openModal() {
+    backdrop.classList.add("active");
+    backdrop.setAttribute("aria-hidden", "false");
+    importBtn.setAttribute("aria-expanded", "true");
+    if (errorBanner) errorBanner.classList.add("is-hidden");
+    if (fileInput) fileInput.focus();
+  }
+
+  function closeModal() {
+    backdrop.classList.remove("active");
+    backdrop.setAttribute("aria-hidden", "true");
+    importBtn.setAttribute("aria-expanded", "false");
+    form.reset();
+    if (errorBanner) errorBanner.classList.add("is-hidden");
+    if (submitBtn) submitBtn.disabled = false;
+    if (submitText) submitText.textContent = "Analyze Manifest";
+    importBtn.focus();
+  }
+
+  importBtn.addEventListener("click", openModal);
+  if (closeBtn) closeBtn.addEventListener("click", closeModal);
+  if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
+
+  backdrop.addEventListener("click", (e) => {
+    if (e.target === backdrop) closeModal();
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && backdrop.classList.contains("active")) {
+      closeModal();
+    }
+  });
+
+  function showError(msg) {
+    if (errorBanner) {
+      errorBanner.textContent = msg;
+      errorBanner.classList.remove("is-hidden");
+    }
+    announce(`Import error: ${msg}`);
+  }
+
+  function setSubmitting(isSubmitting) {
+    if (submitBtn) submitBtn.disabled = isSubmitting;
+    if (submitText) submitText.textContent = isSubmitting ? "Analyzing Manifest..." : "Analyze Manifest";
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (errorBanner) errorBanner.classList.add("is-hidden");
+
+    let manifestRaw = "";
+    let fileName = "manifest.json";
+
+    const file = fileInput.files && fileInput.files[0];
+    const pasted = pasteInput.value.trim();
+
+    if (file) {
+      if (!file.name.toLowerCase().endsWith(".json") && file.type && !file.type.includes("json")) {
+        showError("Only .json manifest files are supported.");
+        return;
+      }
+      if (file.size > 1048576) {
+        showError("Manifest file exceeds 1 MB limit.");
+        return;
+      }
+      try {
+        manifestRaw = await file.text();
+        fileName = file.name;
+      } catch (err) {
+        showError(`Could not read file: ${err.message}`);
+        return;
+      }
+    } else if (pasted) {
+      manifestRaw = pasted;
+    } else {
+      showError("Please select a manifest file or paste manifest JSON.");
+      return;
+    }
+
+    // Pre-flight client JSON syntax and structure validation
+    const validation = validateManifestPreflight(manifestRaw, displayNameInput ? displayNameInput.value : "");
+    if (!validation.valid) {
+      showError(validation.error);
+      return;
+    }
+
+    // Prepare FormData
+    const formData = new FormData();
+    const manifestBlob = new Blob([manifestRaw], { type: "application/json" });
+    formData.append("manifest", manifestBlob, fileName);
+    formData.append("browser", (browserInput && browserInput.value) || "chrome");
+
+    const storeIdVal = storeIdInput.value.trim();
+    if (storeIdVal) {
+      formData.append("store_id", storeIdVal);
+    }
+
+    const displayNameVal = displayNameInput.value.trim();
+    if (displayNameVal) {
+      formData.append("display_name", displayNameVal);
+    }
+
+    setSubmitting(true);
+
+    try {
+      const result = await importExtension(formData);
+      closeModal();
+      announce(`Extension ${result.extension.name} imported successfully.`);
+
+      // Refresh extension list
+      const listContainer = document.getElementById("extension-list");
+      const listData = await getExtensions();
+      const exts = listData.extensions || [];
+      store.setState({ extensions: exts, source: listData.source });
+
+      const notice = document.getElementById("fixture-notice");
+      if (notice) {
+        notice.textContent = `${exts.length} extensions in catalogue`;
+        notice.classList.remove("is-hidden");
+      }
+
+      if (listContainer) {
+        renderSidebarList(listContainer, store.getState(), { onSelect: selectExtension });
+      }
+
+      // Automatically select the newly imported extension
+      if (result.extension && result.extension.id) {
+        selectExtension(result.extension.id);
+      }
+    } catch (err) {
+      setSubmitting(false);
+      showError(err.message || "Failed to import extension manifest.");
     }
   });
 }
@@ -158,9 +315,20 @@ async function selectExtension(id) {
     }
     store.setState({ comparison: compData });
 
-    // Render Panels in exact PRD order:
-    // Identity, Risk gauge, About, Permissions, Version comparison, Permission creep
+    // Render Panels:
     contentCol.replaceChildren();
+
+    // Guided Demo Quick-Selector Banner (For Non-Technical Audiences)
+    contentCol.appendChild(
+      renderGuide({
+        selectedId: id,
+        onSelect: selectExtension,
+        onOpenImport: () => {
+          const btn = document.getElementById("import-btn");
+          if (btn) btn.click();
+        },
+      })
+    );
 
     contentCol.appendChild(renderIdentity(extData));
     contentCol.appendChild(renderGauge(extData.assessment));
@@ -272,6 +440,9 @@ async function init() {
   } catch (err) {
     console.warn("setupMobileDrawer warning:", err);
   }
+
+  // 2b. Setup Manifest Import Modal
+  setupImportModal();
 
   // 3. Setup Search Bar
   try {

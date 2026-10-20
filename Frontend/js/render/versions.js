@@ -241,6 +241,84 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
 
     panel.appendChild(summaryLine);
 
+    // Plain-Language Overview Card for Non-Technical Audiences
+    const scoreDiff = comp.score_to - comp.score_from;
+    let scoreTrendText = "Exposure score remained constant.";
+    let trendColor = "var(--text-muted)";
+    if (scoreDiff > 0) {
+      scoreTrendText = `Permission exposure increased by +${scoreDiff} points (Risk score: ${comp.score_from} -> ${comp.score_to})`;
+      trendColor = "var(--risk-high)";
+    } else if (scoreDiff < 0) {
+      scoreTrendText = `Permission exposure decreased by ${Math.abs(scoreDiff)} points (Risk score: ${comp.score_from} -> ${comp.score_to})`;
+      trendColor = "var(--risk-low)";
+    }
+
+    const overviewCard = h(
+      "div",
+      { className: "version-overview-card" },
+      h(
+        "div",
+        { className: "version-overview-title" },
+        h("strong", null, `What Changed from v${currentFrom} to v${currentTo}?`)
+      ),
+      h(
+        "div",
+        { className: "version-overview-trend", style: { "color": trendColor } },
+        scoreTrendText
+      )
+    );
+
+    const changesList = h("ul", { className: "version-overview-list" });
+
+    if (totalAdded > 0) {
+      const addedNames = [...apiAdded.map((a) => a.name), ...hostAdded.map((h) => h.name)].join(", ");
+      changesList.appendChild(
+        h(
+          "li",
+          null,
+          h("strong", null, "New Capabilities Added: "),
+          `This update introduces ${totalAdded} new permission(s): `,
+          h("span", { className: "mono" }, addedNames),
+          ". Review is suggested to verify that these new powers align with the extension's stated purpose."
+        )
+      );
+    }
+
+    if (totalBroadened > 0) {
+      changesList.appendChild(
+        h(
+          "li",
+          null,
+          h("strong", null, "Website Access Broadened: "),
+          `Host access was widened across ${totalBroadened} pattern(s). The extension can now read or change data on more websites than before.`
+        )
+      );
+    }
+
+    if (totalRemoved > 0) {
+      changesList.appendChild(
+        h(
+          "li",
+          null,
+          h("strong", null, "Permissions Removed: "),
+          `This update removed ${totalRemoved} previously granted permission(s), reducing the exposure footprint.`
+        )
+      );
+    }
+
+    if (totalAdded === 0 && totalBroadened === 0 && totalRemoved === 0) {
+      changesList.appendChild(
+        h(
+          "li",
+          null,
+          "No permission or website access changes were detected between these two releases."
+        )
+      );
+    }
+
+    overviewCard.appendChild(changesList);
+    panel.appendChild(overviewCard);
+
     // Helper to render diff items
     function renderGroupDiff(title, group, broadened = []) {
       const cont = h("div", { style: { "display": "flex", "flex-direction": "column", "gap": "var(--s-2)" } });
@@ -248,24 +326,35 @@ export function renderVersions(versionsData, comparisonData, { onVersionChange }
 
       // 1. Added
       for (const item of group.added || []) {
+        const riskLabel = (item.risk_label || "mid").toLowerCase();
+        const chipClass = (riskLabel === "critical" || riskLabel === "high") ? `chip chip-${riskLabel}` : "chip chip-mid";
+        const tagText = (riskLabel === "critical" || riskLabel === "high") ? `Added (${riskLabel.toUpperCase()})` : "Added";
         cont.appendChild(
           h(
             "div",
             { className: "diff-row diff-added" },
             h("span", { dir: "auto" }, `+ ${item.name}`),
-            h("span", { className: "chip chip-mid" }, "Added")
+            h("span", { className: chipClass }, tagText)
           )
         );
       }
 
       // 2. Broadened
       for (const b of broadened) {
+        const broadenedCol = h("div", { style: { "display": "flex", "flex-direction": "column", "gap": "2px" } },
+          h("span", { dir: "auto" }, `${b.from_pattern} -> ${b.to_pattern}`)
+        );
+        if (b.explanation) {
+          broadenedCol.appendChild(
+            h("span", { style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "font-weight": "normal", "font-family": "system-ui, sans-serif" } }, b.explanation)
+          );
+        }
         cont.appendChild(
           h(
             "div",
             { className: "diff-row diff-broadened" },
-            h("span", { dir: "auto" }, `${b.from_pattern} -> ${b.to_pattern}`),
-            h("span", { className: "chip chip-mid" }, "Broadened")
+            broadenedCol,
+            h("span", { className: "chip chip-high" }, "Broadened Scope")
           )
         );
       }

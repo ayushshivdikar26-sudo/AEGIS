@@ -5,13 +5,34 @@
 
 import { h } from "../dom.js";
 
-function renderPermissionGroup(title, items, groupKey) {
+function humanStatus(status) {
+  switch (status) {
+    case "justified":
+      return { text: "Purpose Aligned", class: "chip-low" };
+    case "needs_review":
+      return { text: "Review Recommended", class: "chip-mid" };
+    case "potentially_excessive":
+      return { text: "Broad Website Access", class: "chip-high" };
+    case "flagged":
+      return { text: "Elevated Capability", class: "chip-high" };
+    case "optional":
+      return { text: "User-Granted", class: "chip-mid" };
+    default:
+      return { text: "Uncertain Alignment", class: "chip-mid" };
+  }
+}
+
+function renderPermissionGroup(title, subtitle, items, groupKey) {
   const group = h("div", { className: "perm-group" });
   const count = items.length;
 
-  group.appendChild(
-    h("h3", { className: "section-label" }, `${title} (${count})`)
+  const headerBox = h(
+    "div",
+    { style: { "margin-bottom": "var(--s-1)" } },
+    h("h3", { className: "section-label", style: { "margin-bottom": "2px" } }, `${title} (${count})`),
+    h("p", { style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "margin": "0" } }, subtitle)
   );
+  group.appendChild(headerBox);
 
   if (count === 0) {
     group.appendChild(
@@ -42,24 +63,25 @@ function renderPermissionGroup(title, items, groupKey) {
   sortedItems.forEach((perm, idx) => {
     const detailId = `perm-detail-${groupKey}-${idx}`;
     const riskWord = (perm.risk_label || "low").toUpperCase();
-    const statusText = perm.status
-      ? perm.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
-      : "Unknown";
+    const statusMeta = humanStatus(perm.status);
 
-    const nameStatusChildren = [
+    const nameRow = h(
+      "div",
+      { style: { "display": "flex", "align-items": "center", "gap": "var(--s-2)", "flex-wrap": "wrap" } },
       h("span", { className: "perm-name", dir: "auto" }, perm.name),
-      h("span", { className: "perm-status" }, statusText),
-    ];
-    if (perm.rule_id) {
-      nameStatusChildren.push(
-        h("span", { className: "chip chip-rule" }, perm.rule_id)
-      );
-    }
+      h("span", { className: `chip ${statusMeta.class}`, style: { "font-size": "10px", "padding": "1px 6px" } }, statusMeta.text)
+    );
+
+    const descRow = h(
+      "div",
+      { className: "perm-plain-desc", style: { "font-size": "var(--text-xs)", "color": "var(--text-muted)", "margin-top": "2px" } },
+      perm.allows || "Standard browser access."
+    );
 
     const summary = h(
       "div",
       { className: "perm-row-summary" },
-      h("div", { className: "perm-name-status" }, ...nameStatusChildren),
+      h("div", { className: "perm-name-status" }, nameRow, descRow),
       h("span", { className: `chip chip-${perm.risk_label || "low"}` }, riskWord)
     );
 
@@ -227,11 +249,32 @@ export function renderPermissions(permissionsData) {
   const hostItems = data.host || [];
   const optItems = data.optional || [];
 
-  panel.appendChild(renderPermissionGroup("API Permissions", apiItems, "api"));
-  panel.appendChild(renderPermissionGroup("Host Permissions", hostItems, "host"));
+  panel.appendChild(
+    renderPermissionGroup(
+      "Browser Capabilities (API Permissions)",
+      "Special browser tools and features this extension is allowed to use.",
+      apiItems,
+      "api"
+    )
+  );
+  panel.appendChild(
+    renderPermissionGroup(
+      "Website Access (Host Permissions)",
+      "Websites this extension can read or modify while you browse.",
+      hostItems,
+      "host"
+    )
+  );
 
   if (optItems.length > 0) {
-    panel.appendChild(renderPermissionGroup("Optional Permissions", optItems, "opt"));
+    panel.appendChild(
+      renderPermissionGroup(
+        "Optional Capabilities",
+        "Permissions enabled only when you explicitly grant consent.",
+        optItems,
+        "opt"
+      )
+    );
   }
 
   return panel;
