@@ -22,7 +22,19 @@ DEMO_DIR = Path(__file__).resolve().parents[2] / "fixtures" / "demo"
 
 @pytest.fixture(autouse=True)
 def clean_store():
-    reset_mock_store()
+    def _cleanup():
+        reset_mock_store()
+        try:
+            from Backend.app.admin import get_admin_client
+            client = get_admin_client()
+            if client:
+                client.table("extensions").delete().eq("store_id", "quicknote-clipper").execute()
+        except Exception:
+            pass
+
+    _cleanup()
+    yield
+    _cleanup()
 
 
 def test_demo_fixture_golden_path():
