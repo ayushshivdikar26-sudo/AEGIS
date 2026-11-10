@@ -3,8 +3,7 @@
 
 <br><br>
 
-# AEGIS: Automated Extension Governance & Inspection Suite
-### A Deterministic Browser-Extension Permission Creep Auditor and Security Governance Platform
+# AEGIS: Deterministic Browser Extension Permission Creep Auditor and Security Governance Platform
 
 <br>
 
@@ -41,7 +40,7 @@
 
 ## CERTIFICATE
 
-This is to certify that the project entitled **“AEGIS: Automated Extension Governance & Inspection Suite”** is a bonafide work of:
+This is to certify that the project entitled **“AEGIS: Deterministic Browser Extension Permission Creep Auditor and Security Governance Platform”** is a bonafide work of:
 
 - **Student Name 1 (Roll No: RollNo-1)**
 - **Student Name 2 (Roll No: RollNo-2)**
@@ -78,7 +77,7 @@ KJSIT, Sion
 
 ## PROJECT APPROVAL FOR S. Y.
 
-This project report entitled **“AEGIS: Automated Extension Governance & Inspection Suite”** by:
+This project report entitled **“AEGIS: Deterministic Browser Extension Permission Creep Auditor and Security Governance Platform”** by:
 
 - Student Name 1 – Div A / RollNo-1
 - Student Name 2 – Div A / RollNo-2
@@ -139,7 +138,7 @@ _____________________________________________
 
 ## ACKNOWLEDGEMENT
 
-Before presenting our SY project work entitled **“AEGIS: Automated Extension Governance & Inspection Suite”**, we would like to convey our sincere thanks to the people who guided us throughout the course of this project work.
+Before presenting our SY project work entitled **“AEGIS: Deterministic Browser Extension Permission Creep Auditor and Security Governance Platform”**, we would like to convey our sincere thanks to the people who guided us throughout the course of this project work.
 
 We would like to express our immense gratitude towards our Project Guide, **Prof. Guide Name**, for the constant encouragement, support, guidance, technical insights, and mentoring at the ongoing stages of the project and report preparation.
 
@@ -162,7 +161,7 @@ Finally, we extend our heartfelt appreciation to all teaching and non-teaching f
 
 Modern web browsers have evolved into comprehensive application runtimes where third-party browser extensions execute with elevated privileges. However, extensions frequently suffer from "permission creep"—the incremental, unvetted expansion of requested capabilities across successive software updates—or demand excessive permissions disproportionate to their declared utility. Traditional vulnerability assessment approaches rely either on opaque heuristics, vulnerable manual reviews, or non-deterministic Large Language Models (LLMs) prone to hallucinations and unverified verdicts. 
 
-To overcome these deficiencies, this project presents **AEGIS (Automated Extension Governance & Inspection Suite)**, a deterministic, rule-based security auditing platform engineered to inspect WebExtension manifests (supporting both Manifest V2 and Manifest V3). AEGIS computes explainable permission-risk scores on a continuous scale of 0 to 100 using a normalized mathematical formulation incorporating heuristic weights and high-exposure danger floors. The platform integrates a deterministic Justification Engine that verifies requested capabilities against declared functional intent using keyword taxonomy and manifest structural evidence, categorizing privileges into justified, needs review, or potentially excessive states. 
+To overcome these deficiencies, this project presents **AEGIS**, a deterministic, rule-based security auditing platform engineered to inspect WebExtension manifests (supporting both Manifest V2 and Manifest V3). AEGIS computes explainable permission-risk scores on a continuous scale of 0 to 100 using a normalized mathematical formulation incorporating heuristic weights and high-exposure danger floors. The platform integrates a deterministic Justification Engine that verifies requested capabilities against declared functional intent using keyword taxonomy and manifest structural evidence, categorizing privileges into justified, needs review, or potentially excessive states. 
 
 Furthermore, AEGIS features a chronological version comparison engine that detects permission escalation, capability broadening across Public Suffix List (PSL) tiers (e.g., single host to broad wildcard `<all_urls>`), and outputs transparent outcome assessments. The backend is built using Python 3.13, FastAPI, Pydantic v2 schemas, and Supabase PostgreSQL with forced Row-Level Security (RLS) tenant isolation. The user interface is developed with vanilla ES2022 modules and semantic CSS adhering to strict Content Security Policy (`default-src 'self'`). The complete test suite of 200 automated adversarial tests verified 92% core code coverage and sub-50ms deterministic scoring latency without any reliance on opaque cloud AI services.
 
@@ -264,7 +263,6 @@ Furthermore, AEGIS features a chronological version comparison engine that detec
 
 | Sr. No. | Abbreviation | Description |
 |---|---|---|
-| 1 | **AEGIS** | Automated Extension Governance & Inspection Suite |
 | 2 | **API** | Application Programming Interface |
 | 3 | **AST** | Abstract Syntax Tree |
 | 4 | **Bidi** | Bidirectional (Unicode Control Characters) |
@@ -317,7 +315,7 @@ Users and enterprise IT administrators currently face severe visibility and secu
 4. **Lack of Explainability:** Security reviewers need quantifiable, auditable evidence. When an extension is flagged as risky, users must understand exactly *which* permissions drove the score, *what* the mathematical steps were, and *why* specific capabilities conflict with the declared purpose.
 
 ## 1.3 Motivation of the Project
-Security in software ecosystems must be rooted in transparency, determinism, and mathematical accountability. The motivation behind developing **AEGIS (Automated Extension Governance & Inspection Suite)** is to deliver an enterprise-grade, open-source governance system that empowers individual users, security researchers, and enterprise compliance officers to inspect, evaluate, and monitor browser extensions with absolute mathematical rigor.
+Security in software ecosystems must be rooted in transparency, determinism, and mathematical accountability. The motivation behind developing **AEGIS** is to deliver an enterprise-grade, open-source governance system that empowers individual users, security researchers, and enterprise compliance officers to inspect, evaluate, and monitor browser extensions with absolute mathematical rigor.
 
 By eliminating non-deterministic AI models from the core auditing loop, AEGIS guarantees that identical extension manifests evaluated under identical knowledge base versions will always produce 100% reproducible risk scores, explainable step-by-step contribution breakdowns, and verifiable creep assessments. The system bridges the critical gap between complex, low-level browser security architectures and understandable, actionable privacy insights.
 
@@ -412,7 +410,7 @@ A comprehensive synthesis of the existing literature reveals several critical re
 # CHAPTER 3: PROPOSED SYSTEM
 
 ## 3.1 About Proposed System
-The proposed system, **AEGIS (Automated Extension Governance & Inspection Suite)**, is an open-source, deterministic web platform and governance suite engineered to audit browser extension manifests. AEGIS enables users and enterprise administrators to inspect the security implications of declared extension capabilities, assess whether requested permissions align with declared functionalities, and track permission creep across successive version updates.
+The proposed system, **AEGIS**, is an open-source, deterministic web platform and governance suite engineered to audit browser extension manifests. AEGIS enables users and enterprise administrators to inspect the security implications of declared extension capabilities, assess whether requested permissions align with declared functionalities, and track permission creep across successive version updates.
 
 AEGIS departs fundamentally from opaque machine-learning and LLM-centric approaches. Every metric computed by AEGIS—from individual capability weights to composite danger floors and creep outcome classifications—is governed by published, deterministic formulas. The platform provides full traceability: every score is accompanied by the exact formula, substituted values, applied danger floors, and an itemized breakdown whose components sum precisely to the final reported score.
 
@@ -924,7 +922,7 @@ The main interface displays an overview of ingested extensions on the left sideb
 
 ```
 +------------------------------------------------------------------------------------+
-|  AEGIS  | Automated Extension Governance & Inspection Suite       [+ Import Manifest] |
+|  AEGIS  | Browser Extension Permission Creep Auditor & Governance Platform       [+ Import Manifest] |
 +------------------------------------------------------------------------------------+
 | [Search extensions...     ] |  Ghostery Privacy Ad Blocker                         |
 |                             |  Chrome Extension · Version 10.4.2 · Manifest V3     |
@@ -1099,7 +1097,7 @@ Traditional extension linters treat match patterns as arbitrary strings. If an e
 # CHAPTER 7: CONCLUSION AND FUTURE SCOPE
 
 ## 7.1 Conclusion
-The **AEGIS (Automated Extension Governance & Inspection Suite)** project successfully implements an open-source, deterministic security auditor and governance platform for WebExtensions. By addressing the critical problem of permission creep and over-privileged browser extensions, the project delivers an auditable, explainable alternative to opaque machine learning systems.
+The **AEGIS** project successfully implements an open-source, deterministic security auditor and governance platform for WebExtensions. By addressing the critical problem of permission creep and over-privileged browser extensions, the project delivers an auditable, explainable alternative to opaque machine learning systems.
 
 Key achievements of the project include:
 1. **Mathematical Scoring Formulation:** Developed an explainable 0–100 permission risk formulation combining set normalization, arithmetic blending, danger floors, and half-up rounding.

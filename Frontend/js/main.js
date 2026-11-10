@@ -337,7 +337,20 @@ async function selectExtension(id) {
       row.setAttribute("aria-selected", match ? "true" : "false");
       row.setAttribute("tabindex", match ? "0" : "-1");
       if (match) {
-        row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        // Only scroll within the sidebar container itself if the sidebar is in view,
+        // never scroll the outer window.
+        const sidebar = document.getElementById("sidebar");
+        const rect = sidebar ? sidebar.getBoundingClientRect() : null;
+        const isSidebarVisible = rect && rect.top < window.innerHeight && rect.bottom > 0;
+        if (isSidebarVisible) {
+          const rowTop = row.offsetTop;
+          const rowBottom = rowTop + row.offsetHeight;
+          if (rowTop < listContainer.scrollTop) {
+            listContainer.scrollTop = rowTop;
+          } else if (rowBottom > listContainer.scrollTop + listContainer.clientHeight) {
+            listContainer.scrollTop = rowBottom - listContainer.clientHeight;
+          }
+        }
       }
     });
   }

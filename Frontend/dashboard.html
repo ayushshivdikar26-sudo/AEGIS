@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/motion.css">
 </head>
+
 <body>
   <a href="#main" class="skip-link">Skip to main content</a>
 
@@ -29,10 +31,12 @@
       </div>
       <div class="hero-copy">
         <h1 class="hero-title">Browser Extension Permission Auditor</h1>
-        <p class="hero-description">See what your browser extensions are permitted to do, and detect when updates expand their access to your personal data or browsing history.</p>
+        <p class="hero-description">See what your browser extensions are permitted to do, and detect when updates expand
+          their access to your personal data or browsing history.</p>
         <div class="hero-buttons">
           <button id="hero-btn-notes" class="hero-btn" type="button">
-            <svg class="hero-btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--aegis-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="hero-btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--aegis-blue)"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="12" cy="12" r="4"></circle>
               <path d="M12 2v2"></path>
               <path d="M12 20v2"></path>
@@ -43,13 +47,14 @@
               <path d="M4.93 19.07l1.41-1.41"></path>
               <path d="M17.66 6.34l1.41-1.41"></path>
             </svg>
-            <span>Sample Notes Sync (Permission Expansion 20 -&gt; 70)</span>
+            <span>Sample Notes Sync </span>
           </button>
           <button id="hero-btn-shield" class="hero-btn" type="button">
-            <svg class="hero-btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--aegis-blue)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <svg class="hero-btn-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--aegis-blue)"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
             </svg>
-            <span>Sample Ad Shield (Filter Rules)</span>
+            <span>Sample Ad Shield </span>
           </button>
           <button id="hero-btn-import" class="hero-btn" type="button">
             <span>+ Import Custom Manifest</span>
@@ -58,7 +63,8 @@
       </div>
       <a class="hero-scroll-note" href="#app-dashboard">
         <span>Scroll down to see the live app</span>
-        <svg class="hero-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <svg class="hero-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="6 9 12 15 18 9"></polyline>
         </svg>
       </a>
@@ -68,66 +74,75 @@
   <!-- App Dashboard Container (Target of Hero Scroll) -->
   <main id="app-dashboard" class="app-dashboard">
 
-  <!-- Mobile Top Bar (< 768px) -->
-  <header class="mobile-header">
-    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle extension menu" aria-expanded="false" aria-controls="sidebar">
-      <svg class="icon"><use href="assets/icons.svg#icon-menu"></use></svg>
-    </button>
-    <a href="#hero-track" class="mobile-header-brand" aria-label="Scroll to AEGIS home">
-      <img src="assets/aegis-mark.png" alt="AEGIS mark" width="32" height="32">
-      <span class="aegis-wordmark aegis-wordmark--sm" aria-label="AEGIS">
-        <span class="wordmark-a" aria-hidden="true">V</span><span aria-hidden="true">EGIS</span>
-      </span>
-    </a>
-  </header>
-
-  <!-- Main Shell -->
-  <div class="app-shell">
-    <div id="drawer-backdrop" class="drawer-backdrop" aria-hidden="true"></div>
-
-    <!-- Navigation Sidebar -->
-    <nav id="sidebar" class="sidebar" aria-label="Extensions">
-      <a href="#hero-track" id="sidebar-brand-link" class="sidebar-header sidebar-brand" aria-label="Scroll to AEGIS home">
-        <img src="assets/aegis-mark.png" alt="AEGIS mark" class="sidebar-logo-mark" width="40" height="40">
-        <span class="aegis-wordmark aegis-wordmark--md" aria-label="AEGIS">
+    <!-- Mobile Top Bar (< 768px) -->
+    <header class="mobile-header">
+      <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Toggle extension menu" aria-expanded="false"
+        aria-controls="sidebar">
+        <svg class="icon">
+          <use href="assets/icons.svg#icon-menu"></use>
+        </svg>
+      </button>
+      <a href="#hero-track" class="mobile-header-brand" aria-label="Scroll to AEGIS home">
+        <img src="assets/aegis-mark.png" alt="AEGIS mark" width="32" height="32">
+        <span class="aegis-wordmark aegis-wordmark--sm" aria-label="AEGIS">
           <span class="wordmark-a" aria-hidden="true">V</span><span aria-hidden="true">EGIS</span>
         </span>
       </a>
+    </header>
 
-      <div class="sidebar-search-area">
-        <div class="search-box" role="search">
-          <svg class="icon"><use href="assets/icons.svg#icon-search"></use></svg>
-          <input type="text" id="search-input" class="search-input" placeholder="Search extensions" aria-label="Search extensions">
-          <button id="search-clear-btn" class="search-clear-btn is-hidden" aria-label="Clear search">
-            <svg class="icon"><use href="assets/icons.svg#icon-close"></use></svg>
-          </button>
+    <!-- Main Shell -->
+    <div class="app-shell">
+      <div id="drawer-backdrop" class="drawer-backdrop" aria-hidden="true"></div>
+
+      <!-- Navigation Sidebar -->
+      <nav id="sidebar" class="sidebar" aria-label="Extensions">
+        <a href="#hero-track" id="sidebar-brand-link" class="sidebar-header sidebar-brand"
+          aria-label="Scroll to AEGIS home">
+          <img src="assets/aegis-mark.png" alt="AEGIS mark" class="sidebar-logo-mark" width="40" height="40">
+          <span class="aegis-wordmark aegis-wordmark--md" aria-label="AEGIS">
+            <span class="wordmark-a" aria-hidden="true">V</span><span aria-hidden="true">EGIS</span>
+          </span>
+        </a>
+
+        <div class="sidebar-search-area">
+          <div class="search-box" role="search">
+            <svg class="icon">
+              <use href="assets/icons.svg#icon-search"></use>
+            </svg>
+            <input type="text" id="search-input" class="search-input" placeholder="Search extensions"
+              aria-label="Search extensions">
+            <button id="search-clear-btn" class="search-clear-btn is-hidden" aria-label="Clear search">
+              <svg class="icon">
+                <use href="assets/icons.svg#icon-close"></use>
+              </svg>
+            </button>
+          </div>
+          <div id="search-count" class="search-count" aria-live="polite"></div>
         </div>
-        <div id="search-count" class="search-count" aria-live="polite"></div>
-      </div>
 
-      <div id="extension-list" class="sidebar-list-container" role="list">
-        <div class="state-message">Loading extensions...</div>
-      </div>
-
-      <div class="sidebar-footer">
-        <div id="fixture-notice" class="fixture-banner is-hidden">
-          Sample data from dev mock API
+        <div id="extension-list" class="sidebar-list-container" role="list">
+          <div class="state-message">Loading extensions...</div>
         </div>
-      </div>
-    </nav>
 
-    <!-- Main Content Area -->
-    <section id="main" class="main-content" tabindex="-1">
-      <div id="content-column" class="content-column">
-        <!-- Rendered dynamically by render/*.js -->
-        <div id="empty-state" class="panel state-message">
-          <img src="assets/aegis-mark.png" width="64" height="64" alt="AEGIS" class="empty-state-logo">
-          <h2>No extension selected</h2>
-          <p>Select an extension from the sidebar to inspect requested permissions and creep history.</p>
+        <div class="sidebar-footer">
+          <div id="fixture-notice" class="fixture-banner is-hidden">
+            Sample data from dev mock API
+          </div>
         </div>
-      </div>
-    </section>
-  </div>
+      </nav>
+
+      <!-- Main Content Area -->
+      <section id="main" class="main-content" tabindex="-1">
+        <div id="content-column" class="content-column">
+          <!-- Rendered dynamically by render/*.js -->
+          <div id="empty-state" class="panel state-message">
+            <img src="assets/aegis-mark.png" width="64" height="64" alt="AEGIS" class="empty-state-logo">
+            <h2>No extension selected</h2>
+            <p>Select an extension from the sidebar to inspect requested permissions and creep history.</p>
+          </div>
+        </div>
+      </section>
+    </div>
   </main>
 
   <!-- Manifest Import Modal Dialog -->
@@ -136,7 +151,9 @@
       <div class="modal-header">
         <h2 id="import-modal-title" class="modal-title">Import WebExtension Manifest</h2>
         <button id="import-modal-close" class="modal-close-btn" aria-label="Close dialog">
-          <svg class="icon"><use href="assets/icons.svg#icon-close"></use></svg>
+          <svg class="icon">
+            <use href="assets/icons.svg#icon-close"></use>
+          </svg>
         </button>
       </div>
 
@@ -144,7 +161,9 @@
         <div id="import-error-banner" class="modal-error-banner is-hidden" role="alert"></div>
 
         <div class="modal-tip-banner">
-          💡 <strong>Tip for Non-Technical Users:</strong> You do not need to locate or upload any files! AEGIS includes interactive sample extensions in the intro section at the top of the page ready to inspect with a single click.
+          💡 <strong>Tip for Non-Technical Users:</strong> You do not need to locate or upload any files! AEGIS includes
+          interactive sample extensions in the intro section at the top of the page ready to inspect with a single
+          click.
         </div>
 
         <div class="form-group">
@@ -155,7 +174,9 @@
 
         <div class="form-group">
           <label for="import-json-paste" class="form-label">Or Paste Manifest JSON</label>
-          <textarea id="import-json-paste" class="form-textarea" placeholder='{"manifest_version": 3, "name": "My Extension", "version": "1.0.0", ...}' spellcheck="false"></textarea>
+          <textarea id="import-json-paste" class="form-textarea"
+            placeholder='{"manifest_version": 3, "name": "My Extension", "version": "1.0.0", ...}'
+            spellcheck="false"></textarea>
           <p class="form-help">Directly paste manifest JSON content for quick demonstration.</p>
         </div>
 
@@ -185,7 +206,9 @@
       <div class="modal-footer">
         <button type="button" id="import-cancel-btn" class="btn btn-secondary">Cancel</button>
         <button type="submit" form="import-form" id="import-submit-btn" class="btn btn-primary">
-          <svg class="icon"><use href="assets/icons.svg#icon-upload"></use></svg>
+          <svg class="icon">
+            <use href="assets/icons.svg#icon-upload"></use>
+          </svg>
           <span id="import-submit-text">Analyze Manifest</span>
         </button>
       </div>
@@ -195,4 +218,5 @@
   <script src="js/file-check.js"></script>
   <script type="module" src="js/main.js?v=1.2"></script>
 </body>
+
 </html>

@@ -35,25 +35,30 @@
   width: 340px;
   height: 361px;
   max-width: 85vw;
+  max-height: min(361px, 34vh);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--s-4);
-  flex-shrink: 0;
+  margin-bottom: var(--s-3);
+  flex-shrink: 1;
 }
 
 #hero-logo {
   display: block;
-  width: 340px;
-  height: 361px;
   max-width: 85vw;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
 }
 
 .hero-logo-static {
   display: none;
   width: 340px;
+  max-height: 100%;
   height: auto;
   max-width: 85vw;
+  object-fit: contain;
 }
 
 .hero-copy {
@@ -64,7 +69,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--s-3);
+  gap: var(--s-2);
 }
 
 .hero-title {
@@ -90,7 +95,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--s-3);
-  margin-top: var(--s-3);
+  margin-top: var(--s-2);
 }
 
 .hero-btn {
@@ -130,10 +135,11 @@
 }
 
 .hero-scroll-note {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  margin-top: var(--s-4);
+  bottom: auto;
+  left: auto;
+  transform: none;
   z-index: 2;
   display: inline-flex;
   flex-direction: column;

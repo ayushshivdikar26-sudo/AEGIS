@@ -109,10 +109,16 @@ def create_app() -> FastAPI:
     async def startup_seed():
         import sys
 
-        from Backend.app.repo import seed_mock_store_from_fixtures
+        from Backend.app.logging_setup import logger
+        from Backend.app.repo import _MOCK_STORE, seed_mock_store_from_fixtures
+        from Backend.app.services.browser_scanner import populate_installed_extensions_into_store
 
         if "pytest" not in sys.modules and settings.ENVIRONMENT != "production":
             seed_mock_store_from_fixtures()
+            try:
+                populate_installed_extensions_into_store(_MOCK_STORE)
+            except Exception as exc:
+                logger.warning(f"Local browser extension scan skipped: {exc}")
 
     return app
 
